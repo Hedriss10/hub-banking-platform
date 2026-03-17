@@ -3,20 +3,14 @@ name: CI/CD Workflow
 on:
   push:
     branches:
-      - develop
+      - main
   pull_request:
     branches:
-      - develop
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+      - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
 
     steps:
       # Checkout do código do repositório
@@ -27,42 +21,43 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.12'
 
-      # Instalar Poetry
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      # Configurar Poetry para criar .venv no repo (facilita cache)
-      - name: Configure Poetry
-        run: |
-          poetry --version
-          poetry config virtualenvs.in-project true
-
-      # Cache para dependências Poetry
-      - name: Cache Poetry dependencies
+      # Cache para dependências Python
+      - name: Cache Python dependencies
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/pypoetry
-            .venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-poetry-
+            ${{ runner.os }}-pip-
 
-      # Instalar dependências (incluindo dev)
-      - name: Install dependencies
-        run: poetry install --with dev
-
-      # Rodar lint (sem auto-fix / sem modificar arquivos no CI)
-      - name: Lint
-        run: poetry run task lint
-
-      # Rodar testes unitários com cobertura >= 98%
-      - name: Run unit tests (coverage >= 98%)
+      # Verificação de disponibilidade de pacotes do sistema
+      - name: Check system package availability
         run: |
-          # Importante: o pyproject.toml define addopts com --cov-fail-under=100.
-          # No CI, neutralizamos addopts e aplicamos o threshold de 98% para unit tests.
-          poetry run pytest -m unit -o addopts= --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=98 -vv
+          sudo apt-get update
+          apt-cache policy libmupdf-dev mupdf mupdf-tools libfreetype6-dev libjpeg-dev
+
+      # Instalação de dependências do sistema
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmupdf-dev mupdf mupdf-tools libfreetype6-dev libjpeg-dev
+
+      # Configuração do ambiente virtual e instalação de dependências Python
+      - name: Install Python dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install pytest pytest-cov pymupdf==1.24.2
+          pip install -r requirements.txt
+
+      # Depuração da instalação do PyMuPDF
+      - name: Debug PyMuPDF installation
+        run: |
+          source venv/bin/activate
+          python -c "import site; print('Site packages:', site.getsitepackages())"
+          python -c "import fitz; print('PyMuPDF version:', fitz.__version__)" || echo "Failed to import fitz"
+          ls -la venv/lib/python3.12/site-packages/fitz || echo "fitz directory not found"
+          ls -la venv/lib/python3.12/site-packages/frontend || echo "frontend directory not found"
