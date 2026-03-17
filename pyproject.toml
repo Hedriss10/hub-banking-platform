@@ -1,32 +1,117 @@
-name = "banking-platform-project"
-version = "0.0.1"
-description = ""
+[project]
+name = "hub-banking-platform"
+version = "2.0.0"
+description = "Plataforma de automação financeira"
 authors = [
-    {name = "Hedris Pereira", email = "hedrisgts@gmail.com"}
+    {name = "Software Hedris Pereira",email = "hedrisgts@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
+
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "fastapi (>=0.122.0,<0.123.0)",
+    "pydantic[email] (>=2.12.5,<3.0.0)",
+    "pydantic-settings (>=2.12.0,<3.0.0)",
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "alembic (>=1.17.2,<2.0.0)",
+    "sqlalchemy (>=2.0.44,<3.0.0)",
+    "asyncpg (>=0.31.0,<0.32.0)",
+    "greenlet (>=3.2.4,<4.0.0)",
+    "argon2-cffi (>=25.1.0,<26.0.0)",
+    "pyjwt (>=2.10.1,<3.0.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "python-multipart (>=0.0.20,<0.0.21)",
+]
+
+[tool.poetry]
+packages = [{include = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = '^8.3.5'
+pytest-asyncio = '^1.0.0'
+pytest-cov = "^6.1.1"
+ruff = '^0.11.12'
+taskipy = "^1.14.1"
+pytest-dotenv = "^0.5.2"
+bandit = "^1.8.3"
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = [
+    '-v', '-s',
+    '--strict-config',
+    '--strict-markers',
+    '--cov=src',
+    '--cov-report=term-missing:skip-covered',
+    '--cov-report=html',
+    '--cov-fail-under=100',
+    '-p no:warnings',
+]
+filterwarnings = ['error']
+testpaths = ['tests']
+markers = [
+    'need_dot_env: tests that consult data in a dot env file.',
+    'unit: unit tests.',
+]
+pythonpath = '.'
+env_files = [".env.test"]
+
+[tool.coverage.run]
+omit = [
+    "src/main.py",
+    "src/core/config/logging.py",
+    "src/**/__init__.py",
+]
 
 [tool.ruff]
-# Define o comprimento máximo da linha como 79.
-line-length = 79
+target-version = "py313"
+fix = true
+src = ["src", "tests"]
 
 [tool.ruff.lint]
-# Adiciona a regra `line-too-long` (E501) explicitamente.
-extend-select = ["E501"]
-# Seleciona as regras para linting.
-select = ["I", "F", "E", "W", "PL", "PT"]
-# Ignora as regras especificadas.
-ignore = ["E402", "F811"]
+extend-ignore = ["PLW0603", "PLR0913"]
+select = [
+    'E',  # pycodestyle errors
+    'W',  # pycodestyle warnings
+    'F',  # pyflakes
+    'I',  # isort (organização de imports)
+    'PL', # pylint
+    'PT', # flake8-pytest
+]
 
-[tool.black]
-# Configurações do Black para formatação.
-line-length = 79
-target-version = ["py313"]
+[tool.ruff.format]
+preview = true
+quote-style = 'single'
 
-[tool.pytest.ini_options] # para gerar o html --cov-report=html
-testpaths = ["tests"]
-asyncio_mode = "auto"
-python_files = "test_*.py"
-python_functions = "test_*"
-addopts = "--verbose --cov=src"
+[tool.ruff.lint.per-file-ignores]
+'__init__.py' = ['F401']
+
+
+[tool.mypy]
+strict = true
+files = ["src"]
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+explicit_package_bases = true
+
+[tool.bandit]
+targets = ["src"]
+
+[tool.taskipy.tasks]
+lint = 'ruff check . --fix && ruff format .'
+format = 'ruff format .'
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=src -vv'
+post_test = 'coverage html'
+open_coverage = 'open htmlcov/index.html'
+pre_test_unit = 'task lint'
+test_unit = 'pytest tests -s -x --cov=src -vv'
+
+[alembic]
+script_location = "migrations"

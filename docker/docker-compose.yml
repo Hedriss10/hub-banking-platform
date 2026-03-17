@@ -1,0 +1,55 @@
+services:
+
+  hub-banking-platform:
+    image: postgres:15
+    container_name: hub-banking-platform
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: barbersystem
+    volumes:
+      - hub-banking-platform_database_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - "${DATABASE_PORT}:5432"
+    networks:
+      - hub-banking-platform-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hub-banking-platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  fast_api-hub-banking-platform-backend:
+    container_name: fast_api_hub_banking_platform_backend
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      hub-banking-platform:
+        condition: service_healthy
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    environment:
+      SQLALCHEMY_DATABASE_URI: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      DEBUG: "${DEBUG}"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS}"
+    volumes:
+      - .:/app
+    networks:
+      - hub-banking-platform-net
+    command: uvicorn src.main:app --host 0.0.0.0 --port ${API_PORT}
+
+
+volumes:
+  postgres_data:
+  fastapi_database_data:
+
+networks:
+  hub-banking-platform-net:
+    driver: bridge
