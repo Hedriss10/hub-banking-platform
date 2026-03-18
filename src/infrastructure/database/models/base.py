@@ -52,5 +52,5 @@ class BaseModelWithEmployee(BaseModel):
     __abstract__ = True
 
     created_by: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey('employee.id'), nullable=False, index=True
+        ForeignKey('employees.id'), nullable=False, index=True
     )

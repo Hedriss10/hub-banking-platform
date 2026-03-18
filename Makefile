@@ -14,6 +14,8 @@ help:
 	@echo "        Run docker compose and force up containers."
 	@echo "    down"
 	@echo "        Stop development docker compose and remove containers."
+	@echo "    logs"
+	@echo "        Exibe os logs dos containers em tempo real."
 	@echo "    formatter"
 	@echo "        Apply black formatting to code."
 	@echo "    lint"
@@ -23,8 +25,8 @@ help:
 	@echo "    lint-fix"
 	@echo "        Lint code with ruff and try to fix."
 
-# Docker Compose - usa arquivos da pasta docker/
-COMPOSE := docker compose -f docker/docker-compose.yml --project-directory .
+# Docker Compose - usa arquivos da pasta docker/ e .env para variáveis
+COMPOSE := docker compose -f docker/docker-compose.yml --project-directory . --env-file .env
 
 run:
 	poetry run uvicorn src.main:app --reload --workers 3 --port $(API_PORT)
@@ -37,6 +39,9 @@ up:
 
 down:
 	$(COMPOSE) down -v
+
+logs:
+	$(COMPOSE) logs -f
 
 formatter:
 	poetry run black src

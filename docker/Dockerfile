@@ -21,7 +21,7 @@ COPY pyproject.toml poetry.lock ./
 # IMPORTANTE: desabilitar venv do poetry
 RUN poetry config virtualenvs.create false
 
-# Instalar libs (sem psycopg2)
+# Instalar libs (apenas deps principais - dev não necessário no container)
 RUN poetry install --no-root --no-interaction --no-ansi
 
 # Agora copiar código

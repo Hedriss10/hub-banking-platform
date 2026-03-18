@@ -2,4 +2,4 @@
 set -e
 
 echo "🔄 Executando migrações do banco de dados..."
-alembic upgrade head
+cd /src && alembic upgrade head
