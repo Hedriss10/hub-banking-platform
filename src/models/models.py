@@ -79,7 +79,7 @@ class OptionRegister(enum.Enum):
 
 class Employee(db.Model):
     __tablename__ = "employee"
-    __table_args__ = {"schema": "time_recording"}
+    __table_args__ = {"schema": "public"}
 
     id: Mapped[int] = mapped_column(
         db.Integer, primary_key=True, autoincrement=True
@@ -94,7 +94,7 @@ class Employee(db.Model):
         db.String(50), nullable=False, unique=True
     )
     company_id: Mapped[int] = mapped_column(
-        db.Integer, ForeignKey("time_recording.company.id"), nullable=False
+        db.Integer, ForeignKey("public.company.id"), nullable=False
     )
     situacao_cadastro: Mapped[str] = mapped_column(
         db.String(20), nullable=False, server_default="ativo"
@@ -106,7 +106,7 @@ class Employee(db.Model):
         db.Integer, ForeignKey("public.user.id"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
-        db.DateTime, nullable=False, server_default=func.current_db.DateTime()
+        db.DateTime, nullable=False, server_default=func.now()
     )
     created_by: Mapped[int] = mapped_column(
         db.Integer, ForeignKey("public.user.id"), nullable=True
@@ -129,7 +129,7 @@ class Employee(db.Model):
 
 class Company(db.Model):
     __tablename__ = "company"
-    __table_args__ = {"schema": "time_recording"}
+    __table_args__ = {"schema": "public"}
 
     id: Mapped[int] = mapped_column(
         db.Integer, primary_key=True, autoincrement=True
@@ -147,27 +147,6 @@ class Company(db.Model):
 
     def __repr__(self):
         return f"<Company: {self.cpnj}>"
-
-
-class Log(db.Model):
-    __tablename__ = "logs"
-    __table_args__ = {"schema": "audit_logs"}
-
-    id: Mapped[int] = mapped_column(
-        db.Integer, primary_key=True, autoincrement=True
-    )
-    timestamp: Mapped[datetime] = mapped_column(
-        db.DateTime, nullable=False, server_default=func.now()
-    )
-    logger_name: Mapped[str] = mapped_column(db.String(100), nullable=False)
-    level: Mapped[str] = mapped_column(db.String(100), nullable=False)
-    message: Mapped[str] = mapped_column(db.Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        db.DateTime, nullable=False, server_default=func.now()
-    )
-
-    def __repr__(self):
-        return f"<Log: Loggin registred at {self.timestamp} - {self.logger_name} - {self.level} - {self.message}>"
 
 
 class Role(db.Model):
@@ -290,7 +269,6 @@ class FlagsUsers(db.Model):
 
 class Rooms(db.Model):
     __tablename__ = "rooms"
-    __table_args__ = {"schema": "public"}
 
     # Colunas
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -310,6 +288,7 @@ class Rooms(db.Model):
         UniqueConstraint(
             "name", "is_deleted", name="unique_rooms_name_is_deleted"
         ),
+        {"schema": "public"},
     )
 
     # Relacionamentos
@@ -318,12 +297,11 @@ class Rooms(db.Model):
 
 class RoomsUsers(db.Model):
     __tablename__ = "rooms_users"
-    __table_args__ = {"schema": "public"}
 
     # Colunas
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     rooms_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("rooms.id"), nullable=False
+        Integer, ForeignKey("public.rooms.id"), nullable=False
     )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("public.user.id"), nullable=False
@@ -341,6 +319,7 @@ class RoomsUsers(db.Model):
     # Constraint única e chaves estrangeiras
     __table_args__ = (
         UniqueConstraint("user_id", "rooms_id", name="unique_user_room"),
+        {"schema": "public"},
     )
 
     room = relationship("Rooms", back_populates="users")
@@ -425,7 +404,6 @@ class LoanOperation(db.Model):
 
 class Bankers(db.Model):
     __tablename__ = "bankers"
-    __table_args__ = {"schema": "public"}
 
     id: Mapped[int] = mapped_column(
         db.Integer, primary_key=True, autoincrement=True
@@ -446,6 +424,7 @@ class Bankers(db.Model):
 
     __table_args__ = (
         UniqueConstraint("name", "is_deleted", name="unique_name_bankers"),
+        {"schema": "public"},
     )
 
     def __repr__(self):

@@ -14,3 +14,8 @@ alembic revision --autogenerate -m "sua mensagem"
 Ou `make migrate` e `make revision m="sua mensagem"`.
 
 Carregue o `.env` (ou exporte `SQLALCHEMY_DATABASE_URI`) antes de correr os comandos.
+
+
+```sh
+alembic revision --autogenerate -m "...."
+```
