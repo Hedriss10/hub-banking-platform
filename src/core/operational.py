@@ -4,7 +4,7 @@ from sqlalchemy import case, func, literal, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import aliased
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import (
     Bankers,
     FinancialAgreements,

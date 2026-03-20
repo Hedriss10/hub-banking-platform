@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.flag import FlagsCore
-from src.resource.swagger.flag import FlagsFactoryPayloads
+from src.router.swagger.flag import FlagsFactoryPayloads
 from src.service.response import Response
 
 # pagination

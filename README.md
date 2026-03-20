@@ -34,7 +34,7 @@ O projeto não usa pastas com os nomes clássicos “MVC”, mas o papel de cada
 | **Controller** (fino) | Mesmos arquivos em `resource/` | Orquestrar request → core e devolver `Response` |
 | **Model** | `src/models/` | Entidades ORM (`db.Model`) |
 | **“Service” / regras** | `src/core/` | Consultas, regras de negócio, uso de `db.session` |
-| **Infra** | `src/db/`, `src/settings/` | Conexão SQLAlchemy, configuração por ambiente |
+| **Infra** | `src/database/`, `src/settings/` | Conexão SQLAlchemy, configuração por ambiente |
 
 Boas práticas para evoluir:
 

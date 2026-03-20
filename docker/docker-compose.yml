@@ -19,7 +19,9 @@ services:
 
   api:
     build:
-      context: ..
+      # Com `make docker-*`, --project-directory é a raiz do repo; `.` = essa raiz.
+      # `..` apontaria para o pai (ex.: /Users/.../temp) e quebrava o path do Dockerfile.
+      context: .
       dockerfile: docker/Dockerfile
     ports:
       - "${API_PORT:-8001}:8001"

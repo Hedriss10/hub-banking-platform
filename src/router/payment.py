@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.payment import PaymentsCore, PaymentsServiceProvided
-from src.resource.swagger.payment import PaymentsFactoryPayloads
+from src.router.swagger.payment import PaymentsFactoryPayloads
 from src.service.response import Response
 
 # pagination

@@ -9,7 +9,7 @@ if not os.getenv('SQLALCHEMY_DATABASE_URI'):
     os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from src.app import create_app
-from src.db.database import db as sqlalchemy_db
+from src.database.database import db as sqlalchemy_db
 
 
 @pytest.fixture(scope='session')

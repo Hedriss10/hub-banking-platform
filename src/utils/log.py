@@ -3,11 +3,11 @@
 import logging
 from datetime import datetime
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Log
 
 
-# setup logger para console e arquivo
+# setup logger só para terminal (sem ficheiros locais)
 def setup_logger(name: str):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
@@ -16,17 +16,12 @@ def setup_logger(name: str):
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
 
-        file_handler = logging.FileHandler('')
-        file_handler.setLevel(logging.DEBUG)
-
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
 
         logger.addHandler(console_handler)
-        logger.addHandler(file_handler)
 
     return logger
 
@@ -52,7 +47,7 @@ logger = setup_logger('AppLogger')
 
 def logdb(level: str, message: str):
     """
-    Salva log no console/arquivo e também no banco de dados.
+    Regista no terminal e persiste no banco (tabela Log), quando aplicável.
     """
     log_func = getattr(logger, level.lower(), logger.info)
     log_func(message)

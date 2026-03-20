@@ -1,34 +1,24 @@
-import os
 from logging.config import fileConfig
 
 from alembic import context
+from dotenv import load_dotenv
+
 from src.app import create_app
-from src.db.database import db
+from src.database import load_all_models
+from src.database.database import db
+
+load_dotenv()
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-import src.models.models  # noqa: F401 — registra tabelas em db.metadata
-
-
-def run_migrations_offline() -> None:
-    url = os.getenv('SQLALCHEMY_DATABASE_URI')
-    if not url:
-        raise RuntimeError('Defina SQLALCHEMY_DATABASE_URI para migrations offline.')
-    context.configure(
-        url=url,
-        target_metadata=db.metadata,
-        literal_binds=True,
-        dialect_opts={'paramstyle': 'named'},
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
+load_all_models()
 
 
 def run_migrations_online() -> None:
+    """Sempre com banco ligado: usa `create_app()` e a engine do Flask-SQLAlchemy."""
     flask_app = create_app()
     with flask_app.app_context():
         connectable = db.engine
@@ -45,6 +35,9 @@ def run_migrations_online() -> None:
 
 
 if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+    raise RuntimeError(
+        'Este projeto usa apenas migrations online (Postgres em execução). '
+        'Defina SQLALCHEMY_DATABASE_URI, suba o banco e execute: alembic upgrade head'
+    )
+
+run_migrations_online()

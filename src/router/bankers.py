@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.finance import BankersCore, FinancialAgreementsCore
-from src.resource.swagger.factorypayloadsFinance import (
+from src.router.swagger.factorypayloadsFinance import (
     FactoryPayloadsBankers,
     FactoryPayloadsFinancialAgreements,
 )

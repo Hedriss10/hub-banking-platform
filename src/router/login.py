@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.login import LoginCore
-from src.resource.swagger.factorypayloadsLogin import PayloadFactoryLogin
+from src.router.swagger.factorypayloadsLogin import PayloadFactoryLogin
 from src.service.response import Response
 
 login_ns = Namespace("login", description="login")

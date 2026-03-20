@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.role import RoleCore
-from src.resource.swagger.factorypayloadsOperational import PayloadFactoryRole
+from src.router.swagger.factorypayloadsOperational import PayloadFactoryRole
 from src.service.response import Response
 
 roles_ns = Namespace("role", description="Manage Role")

@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.rooms import RoomsCore
-from src.resource.swagger.factorypayloadsOperational import PaylaodFactoryRooms
+from src.router.swagger.factorypayloadsOperational import PaylaodFactoryRooms
 from src.service.response import Response
 
 rooms_ns = Namespace("rooms", description="Manage Rooms")

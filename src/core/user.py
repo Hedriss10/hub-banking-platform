@@ -3,7 +3,7 @@ from sqlalchemy import func, insert, select
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Employee, User
 from src.service.response import Response
 from src.utils.log import logdb

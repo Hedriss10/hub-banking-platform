@@ -8,6 +8,8 @@ O build usa `pyproject.toml` + `poetry.lock` para instalar as mesmas versões qu
 
 Usa **apenas** o ficheiro `.env` na **raiz do repositório** (junto a `manage.py`). O `Makefile` invoca o Compose com `--project-directory` apontando para essa raiz, para o Docker carregar esse `.env` na interpolação `${VAR:-padrao}` do `docker-compose.yml`.
 
+O `build.context` da API é `.` **em relação a essa raiz**; se correres o Compose à mão, usa também `--project-directory /caminho/para/hub-banking-platform` (ou `make docker-build`), senão o context do build fica errado.
+
 Copia o modelo:
 
 ```bash

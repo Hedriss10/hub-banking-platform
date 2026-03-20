@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.hourspoint import HourspointCore
-from src.resource.swagger.factorypayloadsOperational import (
+from src.router.swagger.factorypayloadsOperational import (
     PayloadFactoryHourspoint,
 )
 from src.service.response import Response

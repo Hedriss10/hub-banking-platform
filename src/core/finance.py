@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import (
     Bankers,
     FinancialAgreements,

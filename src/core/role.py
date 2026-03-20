@@ -3,7 +3,7 @@ from psycopg2.errors import UniqueViolation
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Role
 from src.service.response import Response
 from src.utils.log import logdb

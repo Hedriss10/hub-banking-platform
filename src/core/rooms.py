@@ -7,7 +7,7 @@ from sqlalchemy import func, join, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import aliased
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Rooms, RoomsUsers, User
 from src.service.response import Response
 from src.utils.log import logdb

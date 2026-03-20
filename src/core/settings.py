@@ -17,6 +17,7 @@ class Config:
     DEBUG = True
     DOCS = os.getenv('DOCS_DEV', '/docs')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    POSTGRES_SCHEMA = os.getenv('POSTGRES_SCHEMA', 'public')
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-change-in-production')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-only-change-in-production')
     JWT_TOKEN_LOCATION = ['headers']
@@ -52,9 +53,12 @@ config_by_name = {
 flask_env = os.getenv('FLASK_ENV', 'development')
 if flask_env not in config_by_name:
     raise ValueError(
-        f'Invalid value for FLASK_ENV: {flask_env}. Must be one of {list(config_by_name.keys())}'
+        f'Invalid value for FLASK_ENV: {flask_env}. '
+        f'Must be one of {list(config_by_name.keys())}'
     )
 
+settings = config_by_name[flask_env]
 
-def get_settings() -> Config:
-    return config_by_name[flask_env]
+
+def get_settings() -> type[Config]:
+    return settings

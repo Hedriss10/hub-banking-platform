@@ -5,7 +5,7 @@ from flask_cors import cross_origin
 from flask_restx import Namespace, Resource
 
 from src.core.user import UsersCore
-from src.resource.swagger.factorypayloadsUser import PaylaodFactoryUser
+from src.router.swagger.factorypayloadsUser import PaylaodFactoryUser
 from src.service.response import Response
 
 # namespace

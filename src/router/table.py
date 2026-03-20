@@ -6,7 +6,7 @@ from flask_restx import Namespace, Resource, reqparse
 from werkzeug.datastructures import FileStorage
 
 from src.core.finance import TablesCore
-from src.resource.swagger.factorypayloadsFinance import (
+from src.router.swagger.factorypayloadsFinance import (
     FactoryPayloadsTablesFinance,
 )
 from src.service.response import Response
