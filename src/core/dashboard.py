@@ -13,7 +13,7 @@ from sqlalchemy import (
     select,
 )
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import ProposalLoan, ProposalStatus, User
 from src.service.response import Response
 from src.utils.log import logdb

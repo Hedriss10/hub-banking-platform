@@ -4,7 +4,7 @@ import traceback
 from psycopg2.errors import UniqueViolation
 from sqlalchemy import func, insert, select, update
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Flag, FlagsProcessing, FlagsUsers
 from src.service.response import Response
 from src.utils.log import logdb

@@ -7,7 +7,7 @@ from sqlalchemy import case, func, insert, or_, select
 from sqlalchemy.orm import aliased
 from werkzeug.datastructures import FileStorage
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import (
     Bankers,
     Benefit,

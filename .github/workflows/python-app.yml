@@ -1,63 +1,36 @@
-name: CI/CD Workflow
+name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-24.04
 
     steps:
-      # Checkout do código do repositório
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Configuração do Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
-      # Cache para dependências Python
-      - name: Cache Python dependencies
+      - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Verificação de disponibilidade de pacotes do sistema
-      - name: Check system package availability
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          apt-cache policy libmupdf-dev mupdf mupdf-tools libfreetype6-dev libjpeg-dev
-
-      # Instalação de dependências do sistema
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libmupdf-dev mupdf mupdf-tools libfreetype6-dev libjpeg-dev
-
-      # Configuração do ambiente virtual e instalação de dependências Python
-      - name: Install Python dependencies
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install pytest pytest-cov pymupdf==1.24.2
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest pytest-cov
 
-      # Depuração da instalação do PyMuPDF
-      - name: Debug PyMuPDF installation
-        run: |
-          source venv/bin/activate
-          python -c "import site; print('Site packages:', site.getsitepackages())"
-          python -c "import fitz; print('PyMuPDF version:', fitz.__version__)" || echo "Failed to import fitz"
-          ls -la venv/lib/python3.12/site-packages/fitz || echo "fitz directory not found"
-          ls -la venv/lib/python3.12/site-packages/frontend || echo "frontend directory not found"
+      - name: Test
+        run: pytest tests -v --tb=short

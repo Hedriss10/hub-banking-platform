@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import func, or_, select
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Bank, Benefit, LoanOperation
 from src.service.response import Response
 from src.utils.log import logdb

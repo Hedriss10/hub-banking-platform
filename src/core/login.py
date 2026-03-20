@@ -5,7 +5,7 @@ from flask_jwt_extended import create_access_token
 from sqlalchemy import func, outerjoin, select
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from src.db.database import db
+from src.database.database import db
 from src.models.models import Employee, User
 from src.service.response import Response
 from src.utils.log import logdb

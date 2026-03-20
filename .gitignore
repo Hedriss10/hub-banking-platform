@@ -11,7 +11,7 @@ report/
 
 # ignore static
 static.
-static/ 
+static/
 
 
 # ignore rav.yaml
@@ -31,7 +31,7 @@ db_backups
 
 sql/
 
-## ignore proposal 
+## ignore proposal
 proposta/
 .proposta
 
@@ -42,7 +42,7 @@ instance/*
 !instance/.gitignore
 .webassets-cache
 .env
-migrations 
+docker/.env
 
 ### Flask.Python Stack ###
 # Byte-compiled / optimized / DLL files
