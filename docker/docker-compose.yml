@@ -1,0 +1,37 @@
+# Variáveis ${VAR:-padrao} vêm do ambiente ou do ficheiro .env na RAIZ do repositório
+# (usa `make docker-up`, que define --project-directory para a raiz).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hub}
+      POSTGRES_DB: ${POSTGRES_DB:-hub_banking}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hub} -d ${POSTGRES_DB:-hub_banking}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "${API_PORT:-8001}:8001"
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-development}
+      SECRET_KEY: ${SECRET_KEY:-docker-dev-secret-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-docker-dev-jwt-change-me}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI:-postgresql+psycopg2://hub:hub@db:5432/hub_banking}
+      DOCS_DEV: ${DOCS_DEV:-/docs}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

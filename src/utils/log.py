@@ -16,11 +16,11 @@ def setup_logger(name: str):
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
 
-        file_handler = logging.FileHandler("src.log")
+        file_handler = logging.FileHandler('')
         file_handler.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
@@ -43,11 +43,11 @@ def log_to_db(logger_name: str, level: str, message: str):
         db.session.add(log_entry)
         db.session.commit()
     except Exception as e:
-        logger = setup_logger("DBLogger")
-        logger.error(f"Erro ao salvar log no banco: {e}")
+        logger = setup_logger('DBLogger')
+        logger.error(f'Erro ao salvar log no banco: {e}')
 
 
-logger = setup_logger("AppLogger")
+logger = setup_logger('AppLogger')
 
 
 def logdb(level: str, message: str):
@@ -56,7 +56,7 @@ def logdb(level: str, message: str):
     """
     log_func = getattr(logger, level.lower(), logger.info)
     log_func(message)
-    log_to_db("AppLogger", level.upper(), message)
+    log_to_db('AppLogger', level.upper(), message)
 
 
 # logdb("warning", "Not found") example

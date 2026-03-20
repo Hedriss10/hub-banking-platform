@@ -54,3 +54,7 @@ if flask_env not in config_by_name:
     raise ValueError(
         f'Invalid value for FLASK_ENV: {flask_env}. Must be one of {list(config_by_name.keys())}'
     )
+
+
+def get_settings() -> Config:
+    return config_by_name[flask_env]

@@ -15,16 +15,15 @@ class Metadata:
             return dict(obj._mapping)
 
         if isinstance(obj, tuple):
-            return {f"col_{i}": value for i, value in enumerate(obj)}
+            return {f'col_{i}': value for i, value in enumerate(obj)}
 
         try:
             return {
-                c.key: getattr(obj, c.key)
-                for c in inspect(obj).mapper.column_attrs
+                c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs
             }
         except Exception:
             raise ValueError(
-                f"Não foi possível converter objeto: {obj}. Tipo: {type(obj)}"
+                f'Não foi possível converter objeto: {obj}. Tipo: {type(obj)}'
             )
 
     def model_to_list(self):
@@ -42,7 +41,7 @@ class Metadata:
         return json.dumps(self.model_to_list(), default=str)
 
     def model_instance_to_dict_get_id(self):
-        if hasattr(self.objects, "__table__"):
+        if hasattr(self.objects, '__table__'):
             return {
                 column.name: getattr(self.objects, column.name)
                 for column in self.objects.__table__.columns
@@ -52,8 +51,7 @@ class Metadata:
 
 def model_to_dict(model):
     return {
-        column.name: getattr(model, column.name)
-        for column in model.__table__.columns
+        column.name: getattr(model, column.name) for column in model.__table__.columns
     }
 
 
@@ -67,10 +65,7 @@ def model_to_list(model):
 
 def model_instance_to_dict(model):
     return [
-        {
-            column.name: getattr(item, column.name)
-            for column in item.__table__.columns
-        }
+        {column.name: getattr(item, column.name) for column in item.__table__.columns}
         for item in model
     ]
 
