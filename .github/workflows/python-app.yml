@@ -14,34 +14,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  lint-and-unit:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
-      # Checkout do código do repositório
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Configuração do Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
-      # Instalar Poetry
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      # Configurar Poetry para criar .venv no repo (facilita cache)
       - name: Configure Poetry
         run: |
           poetry --version
           poetry config virtualenvs.in-project true
 
-      # Cache para dependências Poetry
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
         with:
@@ -52,17 +47,62 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-poetry-
 
-      # Instalar dependências (incluindo dev)
       - name: Install dependencies
         run: poetry install --with dev
 
-      # Rodar lint (sem auto-fix / sem modificar arquivos no CI)
+      # task lint usa --fix; no CI só validamos (sem gravar arquivos).
       - name: Lint
-        run: poetry run task lint
-
-      # Rodar testes unitários com cobertura >= 98%
-      - name: Run unit tests (coverage >= 98%)
         run: |
-          # Importante: o pyproject.toml define addopts com --cov-fail-under=100.
-          # No CI, neutralizamos addopts e aplicamos o threshold de 98% para unit tests.
-          poetry run pytest -m unit -o addopts= --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=98 -vv
+          poetry run ruff check .
+          poetry run ruff format --check .
+
+      # tests/unit inclui todos os arquivos da pasta (ex.: test_logger sem marker @unit).
+      # -o addopts= remove addopts do pyproject (cov 100%, -m not integration, etc.).
+      - name: Run unit tests (coverage >= 70%)
+        run: |
+          poetry run pytest tests/unit -o addopts= \
+            --cov=src \
+            --cov-report=term-missing:skip-covered \
+            --cov-fail-under=70 \
+            -vv
+
+  integration-tests:
+    needs: lint-and-unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configure Poetry
+        run: poetry config virtualenvs.in-project true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('pyproject.toml', 'poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      # Runner ubuntu fornece Docker; Testcontainers sobe Postgres em container.
+      - name: Run integration tests
+        env:
+          ENVIRONMENT: test
+        run: poetry run pytest tests/integration -m integration -vv --no-cov

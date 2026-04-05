@@ -4,11 +4,12 @@ from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
-from src.main import app
 
 
 @pytest.fixture
 def client():
+    from src.main import app
+
     with TestClient(app=app, base_url='http://test') as c:
         yield c
 
