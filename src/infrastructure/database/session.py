@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+
 from src.core.config.settings import get_settings
 from src.core.exceptions.custom import DatabaseException
 

@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, text
 from sqlalchemy.orm import Mapped, as_declarative, declared_attr, mapped_column
 from sqlalchemy.schema import MetaData
+
 from src.core.config.settings import get_settings
 
 settings = get_settings()

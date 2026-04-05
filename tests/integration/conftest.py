@@ -97,12 +97,6 @@ def integration_database_ready(integration_database_url: str) -> None:
 
 
 @pytest.fixture
-def unique_employee_email() -> str:
-    """Email único por teste (commits reais no Postgres, constraint UNIQUE)."""
-    return f'john.{uuid.uuid4().hex}@example.com'
-
-
-@pytest.fixture
 def unique_admin_email() -> str:
     """Email único por teste na tabela admins (constraint UNIQUE em email)."""
     return f'admin.{uuid.uuid4().hex}@example.com'
@@ -115,6 +109,38 @@ def integration_client(integration_database_ready: None):
 
     with TestClient(app=app, base_url='http://test') as c:
         yield c
+
+
+@asyncio_fixture(scope='function', loop_scope='session')
+async def employee_repository_postgres(
+    async_session: AsyncSession,
+):
+    from src.infrastructure.repositories.employee_postgres import (
+        EmployeeRepositoryPostgres,
+    )
+
+    return EmployeeRepositoryPostgres(async_session)
+
+
+@asyncio_fixture(scope='function', loop_scope='session')
+async def employee_service(employee_repository_postgres):
+    from src.domain.service.employee import EmployeeService
+
+    return EmployeeService(employee_repository_postgres)
+
+
+@asyncio_fixture(scope='function', loop_scope='session')
+async def employee_use_case(employee_service):
+    from src.domain.use_case.employee import EmployeeUseCase
+
+    return EmployeeUseCase(employee_service)
+
+
+@asyncio_fixture(scope='function', loop_scope='session')
+async def employee_controller(employee_use_case):
+    from src.interface.api.v2.controller.employee import EmployeeController
+
+    return EmployeeController(employee_use_case)
 
 
 @asyncio_fixture(scope='function', loop_scope='session')

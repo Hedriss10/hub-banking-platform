@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from starlette.middleware.cors import CORSMiddleware
+
 from src.core.config.settings import get_settings
 from src.core.exceptions.custom import (
     DomainException,
@@ -13,7 +15,6 @@ from src.interface.api.v2.middlewares.exceptions import (
     custom_exception_handler,
     request_validation_exception_handler,
 )
-from starlette.middleware.cors import CORSMiddleware
 
 settings = get_settings()
 
@@ -26,6 +27,18 @@ app = FastAPI(
     redoc_url='/redoc' if settings.DEBUG else None,
     openapi_tags=v2_tags_metadata,
 )
+
+
+# hellow word
+@app.get(
+    '/',
+    tags=['Health Check'],
+    summary='Redireciona para a documentação',
+    description='Redireciona para a documentação',
+)
+async def root() -> dict[str, str]:
+    return {'message': 'API Hub Banking Platform Acesse a Documentação em /docs'}
+
 
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
