@@ -1,16 +1,18 @@
 import random
 import uuid
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 from src.interface.api.v2 import v2_router
 from src.interface.api.v2.controller.employee import EmployeeController
 from src.interface.api.v2.dependencies.employee import get_employee_controller
+
+from tests.async_http import async_client_for_app
 
 
 @pytest.fixture
@@ -74,13 +76,7 @@ def mock_repository_user():
 
 
 @pytest.fixture
-def mock_employee_use_case():
-    """Use case mockado para testes do router employee (async)."""
-    return AsyncMock()
-
-
-@pytest.fixture
-def v2_test_app() -> FastAPI:
+def v2_test_app() -> Generator[FastAPI, None, None]:
     """
     Inclui todos os módulos em `src/interface/api/v2/routes/`.
     """
@@ -97,9 +93,14 @@ async def async_v2_client(
     """
     Cliente HTTP assíncrono (httpx) sobre o router v2 completo.
     """
-    transport = ASGITransport(app=v2_test_app)
-    async with AsyncClient(transport=transport, base_url='http://test') as client:
+    async with async_client_for_app(v2_test_app) as client:
         yield client
+
+
+@pytest.fixture
+def mock_employee_use_case() -> AsyncMock:
+    """Use case mockado para testes do router employee (async)."""
+    return AsyncMock()
 
 
 @pytest.fixture
@@ -107,9 +108,7 @@ async def async_employee_client(
     v2_test_app: FastAPI,
     mock_employee_use_case: AsyncMock,
 ) -> AsyncGenerator[AsyncClient, None]:
-    """
-    Cliente HTTP assíncrono sobre `/api/v2/employees` com `EmployeeController` mockado.
-    """
+    """Mesmo transporte que `async_v2_client`, com override do `EmployeeController`."""
     controller = EmployeeController(mock_employee_use_case)
 
     async def _override_controller() -> EmployeeController:
@@ -117,8 +116,7 @@ async def async_employee_client(
 
     v2_test_app.dependency_overrides[get_employee_controller] = _override_controller
 
-    transport = ASGITransport(app=v2_test_app)
-    async with AsyncClient(transport=transport, base_url='http://test') as client:
+    async with async_client_for_app(v2_test_app) as client:
         yield client
 
     v2_test_app.dependency_overrides.pop(get_employee_controller, None)
