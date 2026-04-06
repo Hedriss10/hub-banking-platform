@@ -1,9 +1,24 @@
+import random
 import uuid
+from collections.abc import AsyncGenerator, Generator
 from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
+from src.interface.api.v2 import v2_router
+from src.interface.api.v2.controller.employee import EmployeeController
+from src.interface.api.v2.dependencies.employee import get_employee_controller
+
+from tests.async_http import async_client_for_app
+
+
+@pytest.fixture
+def unique_employee_email() -> str:
+    """E-mail único por teste (evita colisão em UNIQUE no Postgres)."""
+    return f'john.{uuid.uuid4().hex}@example.com'
 
 
 @pytest.fixture
@@ -20,6 +35,88 @@ def generate_uuid() -> UUID:
 
 
 @pytest.fixture
+def unique_employee_document() -> str:
+    """Documento numérico único (12 dígitos, alinhado aos testes de modelo)."""
+    return f'{random.randint(100000000000, 999999999999)}'
+
+
+@pytest.fixture
+def employee_create_dto(unique_employee_email: str, unique_employee_document: str):
+    from tests.fixtures.employee_factories import build_employee_create_dto
+
+    return build_employee_create_dto(
+        email=unique_employee_email,
+        document=unique_employee_document,
+    )
+
+
+@pytest.fixture
+def employee_dto():
+    from tests.fixtures.employee_factories import build_employee_dto
+
+    return build_employee_dto()
+
+
+@pytest.fixture
+def employee_update_dto():
+    from tests.fixtures.employee_factories import build_employee_update_dto
+
+    return build_employee_update_dto()
+
+
+@pytest.fixture
+def random_employee_id() -> UUID:
+    return uuid.uuid4()
+
+
+@pytest.fixture
 def mock_repository_user():
     repo = AsyncMock()
     return repo
+
+
+@pytest.fixture
+def v2_test_app() -> Generator[FastAPI, None, None]:
+    """
+    Inclui todos os módulos em `src/interface/api/v2/routes/`.
+    """
+    app = FastAPI()
+    app.include_router(v2_router, prefix='/api')
+    yield app
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def async_v2_client(
+    v2_test_app: FastAPI,
+) -> AsyncGenerator[AsyncClient, None]:
+    """
+    Cliente HTTP assíncrono (httpx) sobre o router v2 completo.
+    """
+    async with async_client_for_app(v2_test_app) as client:
+        yield client
+
+
+@pytest.fixture
+def mock_employee_use_case() -> AsyncMock:
+    """Use case mockado para testes do router employee (async)."""
+    return AsyncMock()
+
+
+@pytest.fixture
+async def async_employee_client(
+    v2_test_app: FastAPI,
+    mock_employee_use_case: AsyncMock,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Mesmo transporte que `async_v2_client`, com override do `EmployeeController`."""
+    controller = EmployeeController(mock_employee_use_case)
+
+    async def _override_controller() -> EmployeeController:
+        return controller
+
+    v2_test_app.dependency_overrides[get_employee_controller] = _override_controller
+
+    async with async_client_for_app(v2_test_app) as client:
+        yield client
+
+    v2_test_app.dependency_overrides.pop(get_employee_controller, None)

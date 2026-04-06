@@ -3,7 +3,7 @@ from src.infrastructure.database.models.employee import Employee
 
 pytestmark = pytest.mark.unit
 
-RESULTS_EXPECTED = 9
+RESULTS_EXPECTED = 10
 
 
 def test_employee_model_has_expected_columns():
@@ -17,6 +17,7 @@ def test_employee_model_has_expected_columns():
         'last_name',
         'role',
         'email',
+        'document',
         'password',
     ]
     assert len(Employee.__table__.columns) == RESULTS_EXPECTED

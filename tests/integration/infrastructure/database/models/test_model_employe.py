@@ -1,3 +1,5 @@
+from random import randint
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,7 @@ async def test_employee_model_can_be_created(
         last_name='Doe',
         role=RoleStatus.ADMIN,
         email=unique_employee_email,
+        document=f'{randint(100000000000, 999999999999)}',
         password='password',
     )
     async_session.add(employee)
@@ -33,6 +36,7 @@ async def test_employee_model_can_be_retrieved(
         last_name='Doe',
         role=RoleStatus.ADMIN,
         email=unique_employee_email,
+        document=f'{randint(100000000000, 999999999999)}',
         password='password',
     )
     async_session.add(employee)
@@ -49,6 +53,7 @@ async def test_employee_model_can_be_updated(
         last_name='Doe',
         role=RoleStatus.ADMIN,
         email=unique_employee_email,
+        document=f'{randint(100000000000, 999999999999)}',
         password='password',
     )
     async_session.add(employee)
@@ -68,6 +73,7 @@ async def test_employee_model_can_be_listed(
             last_name='Doe',
             role=RoleStatus.ADMIN,
             email=unique_employee_email,
+            document=f'{randint(100000000000, 999999999999)}',
             password='password',
         ),
     ]
@@ -88,6 +94,7 @@ async def test_employee_model_can_be_filtered(
             last_name='Doe',
             role=RoleStatus.ADMIN,
             email=unique_employee_email,
+            document=f'{randint(100000000000, 999999999999)}',
             password='password',
         ),
     ]
@@ -112,6 +119,7 @@ async def test_employee_soft_delete(
         last_name='Doe',
         role=RoleStatus.ADMIN,
         email=unique_employee_email,
+        document=f'{randint(100000000000, 999999999999)}',
         password='password',
     )
     async_session.add(employee)
@@ -131,6 +139,7 @@ async def test_employee_hard_delete(
         last_name='Doe',
         role=RoleStatus.ADMIN,
         email=unique_employee_email,
+        document=f'{randint(100000000000, 999999999999)}',
         password='password',
     )
     async_session.add(employee)

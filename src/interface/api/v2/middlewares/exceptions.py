@@ -3,6 +3,7 @@ from typing import Union
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
 from src.core.exceptions.custom import (
     DomainException,
     InfrastructureException,
