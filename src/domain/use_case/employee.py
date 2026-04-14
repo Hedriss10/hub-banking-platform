@@ -23,16 +23,16 @@ class EmployeeUseCase:
             ) from error
 
     async def get_employee(self, employee_id: UUID) -> EmployeeDTO:
-        found = await self.employee_service.get_employee(employee_id)
-        if not found:
+        employee = await self.employee_service.get_employee(employee_id)
+        if not employee:
             raise EmployeeNotFoundException('Funcionário não encontrado')
-        return found
+        return employee
 
     async def update_employee(
         self, employee_id: UUID, payload: EmployeeUpdateDTO
     ) -> EmployeeDTO:
-        existing = await self.employee_service.get_employee(employee_id)
-        if not existing:
+        employee_existing = await self.employee_service.get_employee(employee_id)
+        if not employee_existing:
             raise EmployeeNotFoundException('Funcionário não encontrado')
         try:
             return await self.employee_service.update_employee(employee_id, payload)
@@ -42,8 +42,8 @@ class EmployeeUseCase:
             ) from error
 
     async def delete_employee(self, employee_id: UUID) -> None:
-        existing = await self.employee_service.get_employee(employee_id)
-        if not existing:
+        employee_existing = await self.employee_service.get_employee(employee_id)
+        if not employee_existing:
             raise EmployeeNotFoundException('Funcionário não encontrado')
         await self.employee_service.delete_employee(employee_id)
 
