@@ -1,3 +1,6 @@
+# PostgreSQL + FastAPI. Proxy Daycoval (nginx) fica no HOST da VPS — ver deploy/README.md
+# e deploy/nginx-daycoval-sandbox.conf.
+
 services:
 
   hub-banking-platform:
