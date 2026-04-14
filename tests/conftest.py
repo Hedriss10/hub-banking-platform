@@ -120,3 +120,31 @@ async def async_employee_client(
         yield client
 
     v2_test_app.dependency_overrides.pop(get_employee_controller, None)
+
+
+@pytest.fixture
+def mock_auth_use_case() -> AsyncMock:
+    """Use case mockado para testes do router de login (async)."""
+    return AsyncMock()
+
+
+@pytest.fixture
+async def async_auth_client(
+    v2_test_app: FastAPI,
+    mock_auth_use_case: AsyncMock,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Cliente v2 com override do `AuthController` (use case mockado)."""
+    from src.interface.api.v2.controller.auth import AuthController
+    from src.interface.api.v2.dependencies.auth import get_auth_controller
+
+    controller = AuthController(mock_auth_use_case)
+
+    async def _override_controller() -> AuthController:
+        return controller
+
+    v2_test_app.dependency_overrides[get_auth_controller] = _override_controller
+
+    async with async_client_for_app(v2_test_app) as client:
+        yield client
+
+    v2_test_app.dependency_overrides.pop(get_auth_controller, None)
