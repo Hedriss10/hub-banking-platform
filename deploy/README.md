@@ -7,7 +7,9 @@
 | **PostgreSQL + FastAPI** | `docker/docker-compose.yml` (`make up`) |
 | **Nginx → Daycoval** | **Host da VPS** (`/etc/nginx/`), não dentro do Compose |
 
-O proxy precisa estar no **host** para o tráfego sair pelo **IP público** liberado pela Daycoval. O Docker publica a API em outra porta (ex.: 8000); a porta **80** é do nginx no sistema.
+O proxy precisa estar no **host** para o tráfego sair pelo **IP público** liberado pela Daycoval. O Docker publica a API em outra porta (ex.: 8000). Este template usa **8080** no nginx quando a **80** já está ocupada.
+
+O `deploy/nginx-daycoval-sandbox.conf` usa **`resolver` com `ipv6=off`** e `proxy_pass` com variável: assim o upstream é contactado só por **IPv4**. Sem isso, em algumas VPS o nginx pode escolher **IPv6** e falhar (500) enquanto `curl` direto à API funciona.
 
 ## Nginx no host
 
@@ -32,11 +34,11 @@ Se apareceu esse erro, apague o conteúdo e copie de novo só o arquivo `deploy/
 
 3. Se `deploy/` não existir na VPS após `git pull`, faça push do branch no seu Mac ou copie o `.conf` manualmente.
 
-3. Firewall: `sudo ufw allow 80/tcp` (e `443` se usar TLS no proxy).
+4. Firewall: `sudo ufw allow 8080/tcp` (porta do proxy Daycoval).
 
-4. Na aplicação: `DAYCOVAL_BASE_URL=http://<IP_PUBLICO_DA_VPS>` no `.env`.
+5. Na aplicação: `DAYCOVAL_BASE_URL=http://<IP_PUBLICO_DA_VPS>:8080` no `.env` — a porta deve ser a mesma do `listen` do nginx.
 
-5. Peça à Daycoval a liberação desse IP (evitar bloqueio WAF / geo).
+6. Peça à Daycoval a liberação desse IP (evitar bloqueio WAF / geo).
 
 ## Docker Compose
 
