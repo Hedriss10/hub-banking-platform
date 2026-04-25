@@ -28,6 +28,12 @@ help:
 # Docker Compose - usa arquivos da pasta docker/ e .env para variáveis
 COMPOSE := docker compose -f docker/docker-compose.yml --project-directory . --env-file .env
 
+DEPLOY_COMPOSE := docker buildx build \
+  --platform linux/amd64 \
+  -f docker/Dockerfile \
+  -t hedris10/hub-banking-platform:latest \
+  --push .
+
 run:
 	poetry run uvicorn src.main:app --reload --workers 3 --port $(API_PORT)
 
@@ -42,6 +48,9 @@ down:
 
 logs:
 	$(COMPOSE) logs -f
+
+deploy:
+	$(DEPLOY_COMPOSE) up -d --build
 
 formatter:
 	poetry run black src

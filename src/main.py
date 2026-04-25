@@ -23,8 +23,8 @@ title = f'{settings.APP_NAME} API v{settings.API_VERSION}'
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.API_VERSION,
-    docs_url='/docs' if settings.DEBUG else None,
-    redoc_url='/redoc' if settings.DEBUG else None,
+    docs_url='/docs',
+    redoc_url='/redoc',
     openapi_tags=v2_tags_metadata,
 )
 
