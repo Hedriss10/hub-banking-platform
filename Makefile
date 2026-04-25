@@ -16,6 +16,8 @@ help:
 	@echo "        Stop development docker compose and remove containers."
 	@echo "    logs"
 	@echo "        Exibe os logs dos containers em tempo real."
+	@echo "    deploy"
+	@echo "        Build and push production image to Docker Hub."
 	@echo "    formatter"
 	@echo "        Apply black formatting to code."
 	@echo "    lint"
@@ -28,7 +30,7 @@ help:
 # Docker Compose - usa arquivos da pasta docker/ e .env para variáveis
 COMPOSE := docker compose -f docker/docker-compose.yml --project-directory . --env-file .env
 
-DEPLOY_COMPOSE := docker buildx build \
+DEPLOY_IMAGE := docker buildx build \
   --platform linux/amd64 \
   -f docker/Dockerfile \
   -t hedris10/hub-banking-platform:latest \
@@ -50,7 +52,7 @@ logs:
 	$(COMPOSE) logs -f
 
 deploy:
-	$(DEPLOY_COMPOSE) up -d --build
+	$(DEPLOY_IMAGE)
 
 formatter:
 	poetry run black src
