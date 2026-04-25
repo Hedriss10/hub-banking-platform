@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Any, ClassVar, List, Union
+from typing import Any, ClassVar, List, Optional, Union
 
 from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # APP
     APP_NAME: str = 'hub-banking-platform'
     APP_NAME_FOR_CALLBACKS: str = ''
-    API_VERSION: str = '/api/v2'
+    API_VERSION: str = '2.0.0'
 
     # CORS
     BACKEND_CORS_ORIGINS: Union[List[str], List[AnyHttpUrl]] = []
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     DATABASE_USER: str = 'postgres'
     DATABASE_PASSWORD: str = 'postgres'
     DATABASE_NAME: str = 'hub-banking-platform'
-    SQLALCHEMY_DATABASE_URI: str | None = None
+    SQLALCHEMY_DATABASE_URI: Optional[str] = None
     DATABASE_POOL_SIZE: int = 5
     DATABASE_MAX_OVERFLOW: int = 10
     DATABASE_TIMEOUT: int = 30
