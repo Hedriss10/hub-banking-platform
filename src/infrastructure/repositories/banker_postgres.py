@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 from uuid import UUID
 
@@ -7,9 +8,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exceptions.custom import DatabaseException, DuplicatedException
 from src.domain.dtos.bankers import BankerCreateDto, BankerOutDto, BankerUpdateDto
+from src.domain.exceptions.bankers import BankerNameAlreadyExistsException
 from src.domain.repositories.bankers import BankersRepository
 from src.infrastructure.database.models.bankers import BankersModel
 from src.infrastructure.database.utils.status_code import is_unique_violation
+
+# PostgreSQL detail típico: Key (name)=(valor)
+_BANKERS_NAME_UNIQUE_DETAIL = re.compile(
+    r'Key\s*\(\s*name\s*\)\s*=\s*\(\s*(.*?)\s*\)',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _raise_duplicate_banker_name_or_generic(error: IntegrityError) -> None:
+    raw = str(getattr(error, 'orig', None) or error)
+    if 'bankers_name_key' not in raw:
+        raise DuplicatedException(raw) from error
+    match = _BANKERS_NAME_UNIQUE_DETAIL.search(raw)
+    dup_name = match.group(1).strip() if match else None
+    raise BankerNameAlreadyExistsException(name=dup_name or None) from error
 
 
 class BankersPostgresRepository(BankersRepository):
@@ -56,7 +73,7 @@ class BankersPostgresRepository(BankersRepository):
         except IntegrityError as error:
             await self.session.rollback()
             if is_unique_violation(error):
-                raise DuplicatedException(str(error.orig)) from error
+                _raise_duplicate_banker_name_or_generic(error)
             raise DatabaseException(str(error.orig)) from error
         except SQLAlchemyError as error:
             await self.session.rollback()
@@ -87,7 +104,7 @@ class BankersPostgresRepository(BankersRepository):
         except IntegrityError as error:
             await self.session.rollback()
             if is_unique_violation(error):
-                raise DuplicatedException(str(error.orig)) from error
+                _raise_duplicate_banker_name_or_generic(error)
             raise DatabaseException(str(error.orig)) from error
         except SQLAlchemyError as error:
             await self.session.rollback()

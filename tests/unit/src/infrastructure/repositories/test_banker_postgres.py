@@ -6,6 +6,7 @@ import src.infrastructure.repositories.banker_postgres as banker_postgres_mod
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from src.core.exceptions.custom import DatabaseException, DuplicatedException
 from src.domain.dtos.bankers import BankerCreateDto, BankerUpdateDto
+from src.domain.exceptions.bankers import BankerNameAlreadyExistsException
 from src.infrastructure.repositories.banker_postgres import BankersPostgresRepository
 from tests.fixtures.banker_factories import build_banker_out_dto
 
@@ -22,6 +23,25 @@ def _integrity_fk() -> IntegrityError:
     orig = MagicMock()
     orig.pgcode = '23503'
     return IntegrityError('stmt', None, orig)
+
+
+class _UniqueDetailOrig:
+    """Simula asyncpg UniqueViolationError.__str__ com bankers.name."""
+
+    pgcode = '23505'
+
+    def __init__(self, name: str = 'daycoval') -> None:
+        self._name = name
+
+    def __str__(self) -> str:
+        return (
+            'duplicate key value violates unique constraint "bankers_name_key"\n'
+            f'DETAIL:  Key (name)=({self._name}) already exists.'
+        )
+
+
+def _integrity_bankers_name_duplicate(name: str = 'daycoval') -> IntegrityError:
+    return IntegrityError('stmt', None, _UniqueDetailOrig(name=name))
 
 
 @pytest.fixture
@@ -159,6 +179,22 @@ async def test_create_banker_integrity_unique(
 
 
 @pytest.mark.asyncio
+async def test_create_banker_duplicate_name_raises_banker_name_already_exists(
+    repository: BankersPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    dto = BankerCreateDto(name='daycoval', created_by=uuid4())
+    mock_session.commit = AsyncMock(side_effect=_integrity_bankers_name_duplicate())
+    mock_session.add = MagicMock()
+
+    with pytest.raises(BankerNameAlreadyExistsException) as excinfo:
+        await repository.create_banker(dto)
+
+    assert excinfo.value.code == 'BANKER_NAME_ALREADY_EXISTS'
+    assert 'daycoval' in str(excinfo.value)
+
+
+@pytest.mark.asyncio
 async def test_create_banker_integrity_other(
     repository: BankersPostgresRepository,
     mock_session: AsyncMock,
@@ -250,6 +286,22 @@ async def test_update_banker_integrity_unique(
 
     with pytest.raises(DuplicatedException):
         await repository.update_banker(uuid4(), BankerUpdateDto(name='Novo'))
+
+
+@pytest.mark.asyncio
+async def test_update_banker_duplicate_name_raises_banker_name_already_exists(
+    repository: BankersPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    r2 = _mock_result_with_scalar(MagicMock())
+    mock_session.execute = AsyncMock(return_value=r2)
+    mock_session.commit = AsyncMock(side_effect=_integrity_bankers_name_duplicate())
+
+    with pytest.raises(BankerNameAlreadyExistsException) as excinfo:
+        await repository.update_banker(uuid4(), BankerUpdateDto(name='daycoval'))
+
+    assert excinfo.value.code == 'BANKER_NAME_ALREADY_EXISTS'
+    assert 'daycoval' in str(excinfo.value)
 
 
 @pytest.mark.asyncio
