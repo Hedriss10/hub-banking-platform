@@ -1,0 +1,369 @@
+{
+  "info": {
+    "_postman_id": "caac573c-aa2c-41b1-b656-af327241b3d1",
+    "name": "Algo-tech-bs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "26207405",
+    "_collection_link": "https://go.postman.co/collection/26207405-caac573c-aa2c-41b1-b656-af327241b3d1?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Bancos",
+      "item": [
+        {
+          "name": "Criar um banco para operação",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Daycoval\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/bankers",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "bankers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listagem de bancos",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/bankers",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "bankers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar Banco",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Makasi 2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/bankers/:banker_id",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "bankers",
+                ":banker_id"
+              ],
+              "variable": [
+                {
+                  "key": "banker_id",
+                  "value": "4985a6ea-3d44-477e-8ad2-218ce239e980"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deletar o banco",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/bankers/:banker_id",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "bankers",
+                ":banker_id"
+              ],
+              "variable": [
+                {
+                  "key": "banker_id",
+                  "value": "abc7acbf-d70e-48b6-b3f8-c11d48d69fb5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar o banco por ID",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/bankers/:banker_id",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "bankers",
+                ":banker_id"
+              ],
+              "variable": [
+                {
+                  "key": "banker_id",
+                  "value": "4985a6ea-3d44-477e-8ad2-218ce239e980"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Autenticação",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"hedrisgts@gmail.com\",\n    \"password\": \"Binfae@45\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/login",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Funcionário",
+      "item": [
+        {
+          "name": "Listar um funcionário",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/employees",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "employees"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Criar um funcionário",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{URL_BASE}}/employee",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "employee"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Atualizar um funcionário",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/employees",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "employees"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deletar um funcionário",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/employees/:employee_id",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "employees",
+                ":employee_id"
+              ],
+              "variable": [
+                {
+                  "key": "employee_id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar um funcionário por ID",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMyMjIxZDQ5LThlNDQtNDE4Zi04YmU2LTY2OWYzMWQ2OWUyNCIsImVtYWlsIjoiaGVkcmlzZ3RzQGdtYWlsLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3NzMyMDU1OSwiZXhwIjoxNzc5NDgwNTU5fQ.aOiFT7A3ZVhP9rzn_kiirR5nT0MGOTKZ2SqttIQgSf4",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \" Makasi \"\n}"
+            },
+            "url": {
+              "raw": "{{URL_BASE}}/employees/:employee_id",
+              "host": [
+                "{{URL_BASE}}"
+              ],
+              "path": [
+                "employees",
+                ":employee_id"
+              ],
+              "variable": [
+                {
+                  "key": "employee_id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

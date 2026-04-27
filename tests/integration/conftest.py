@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import asyncio
 import os
+import random
 import subprocess
 import sys
 import uuid
 from collections.abc import AsyncGenerator, Iterator
 from pathlib import Path
+from uuid import UUID
 
 import pytest
 from pytest_asyncio import fixture as asyncio_fixture
@@ -154,3 +156,40 @@ async def async_session(
     factory = get_session_factory()
     async with factory() as session:
         yield session
+
+
+@pytest.fixture
+def unique_banker_name() -> str:
+    """Nome curto (≤20) e único por teste (constraint + VARCHAR(20) em `bankers`)."""
+    return f'A{uuid.uuid4().hex[:8]}'
+
+
+@pytest.fixture
+def other_unique_banker_name() -> str:
+    """Segundo nome para testes que precisam de dois bancos (UNIQUE em `name`)."""
+    return f'Z{uuid.uuid4().hex[:8]}'
+
+
+@asyncio_fixture(scope='function', loop_scope='session')
+async def created_by_employee_id(
+    async_session: AsyncSession,
+    unique_employee_email: str,
+) -> AsyncGenerator[UUID, None]:
+    """
+    `BankersModel` (BaseModelWithEmployee) exige FK `created_by` -> `employees.id`.
+    """
+    from src.infrastructure.database.models.common.role import RoleStatus
+    from src.infrastructure.database.models.employee import Employee
+
+    employee = Employee(
+        first_name='Int',
+        last_name='Bnk',
+        role=RoleStatus.ADMIN,
+        email=unique_employee_email,
+        document=f'{random.randint(100000000000, 999999999999)}',
+        password='hashed',
+    )
+    async_session.add(employee)
+    await async_session.commit()
+    await async_session.refresh(employee)
+    yield employee.id
