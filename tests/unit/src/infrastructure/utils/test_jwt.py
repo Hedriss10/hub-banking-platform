@@ -44,3 +44,20 @@ def test_create_access_token_encodes_and_decodes_payload(
     assert decoded['role'] == 'ADMIN'
     assert 'exp' in decoded
     assert 'iat' in decoded
+
+
+def test_decode_access_token_roundtrip(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = _settings_jwt()
+    monkeypatch.setattr(jwt_token_module, 'get_settings', lambda: settings)
+
+    eid = uuid4()
+    token = jwt_token_module.create_access_token(
+        employee_id=eid,
+        email='a@b.com',
+        role='ADMIN',
+    )
+    out = jwt_token_module.decode_access_token(token)
+    assert out['id'] == str(eid)
+    assert out['email'] == 'a@b.com'

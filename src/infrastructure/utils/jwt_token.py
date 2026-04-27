@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Any
 from uuid import UUID
 
 import jwt
@@ -25,4 +26,17 @@ def create_access_token(
         payload,
         settings.JWT_SECRET,
         algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+def decode_access_token(token: str) -> dict[str, Any]:
+    """
+    Valida a assinatura e o prazo (exp) do JWT do fluxo de login.
+    Repropaga exceções do PyJWT (ex.: ExpiredSignatureError, InvalidTokenError).
+    """
+    settings = get_settings()
+    return jwt.decode(
+        token,
+        settings.JWT_SECRET,
+        algorithms=[settings.JWT_ALGORITHM],
     )
