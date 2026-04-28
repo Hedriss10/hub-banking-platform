@@ -1,4 +1,4 @@
-"""Testes do caso de uso Employee (exceções de domínio e orquestração)."""
+"""Employee use-case tests (domain exceptions and orchestration)."""
 
 from unittest.mock import AsyncMock
 

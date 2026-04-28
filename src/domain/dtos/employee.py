@@ -49,5 +49,5 @@ class EmployeeDTO(BaseModel):
     @field_validator('role', mode='before')
     @classmethod
     def role_from_orm(cls, value: Any) -> EmployeeRole:
-        """ORM usa `RoleStatus`; domínio usa `EmployeeRole` (mesmos valores)."""
+        """Maps ORM ``RoleStatus`` to domain ``EmployeeRole`` (same values)."""
         return _to_employee_role(value)

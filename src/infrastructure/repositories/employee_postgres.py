@@ -61,7 +61,7 @@ class EmployeeRepositoryPostgres(EmployeeRepository):
         if not payload:
             current = await self.get_employee_by_id(employee_id)
             if current is None:
-                raise DatabaseException('Funcionário não encontrado')
+                raise DatabaseException('Employee not found')
             return current
         try:
             stmt = (
@@ -75,7 +75,7 @@ class EmployeeRepositoryPostgres(EmployeeRepository):
             employee_db = result.scalar_one_or_none()
             if employee_db is None:
                 await self.session.rollback()
-                raise DatabaseException('Funcionário não encontrado')
+                raise DatabaseException('Employee not found')
             await self.session.commit()
             return EmployeeDTO.model_validate(employee_db)
         except IntegrityError as error:

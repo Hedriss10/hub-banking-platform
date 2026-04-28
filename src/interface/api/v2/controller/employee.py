@@ -11,7 +11,7 @@ from src.interface.api.v2.schemas.employee import (
 
 
 def _employee_dto_to_schema(dto: EmployeeDTO) -> EmployeeSchema:
-    """Pydantic não aceita outro BaseModel em `model_validate` sem `model_dump`."""
+    """Validate via dumped dict (cross-model boundaries)."""
     return EmployeeSchema.model_validate(dto.model_dump())
 
 

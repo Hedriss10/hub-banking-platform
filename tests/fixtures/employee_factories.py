@@ -1,5 +1,5 @@
 """
-Fábricas puras para DTOs de funcionário — reutilizáveis em unit e integration.
+Pure factories for employee DTOs — reusable in unit and integration tests.
 """
 
 from __future__ import annotations

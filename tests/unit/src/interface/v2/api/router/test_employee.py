@@ -66,17 +66,17 @@ async def test_patch_update_employee(
     mock_employee_use_case: AsyncMock,
     employee_dto,
 ) -> None:
-    updated = build_employee_dto(first_name='Novo')
+    updated = build_employee_dto(first_name='Updated')
     mock_employee_use_case.update_employee = AsyncMock(return_value=updated)
     eid = employee_dto.id
 
     response = await async_employee_client.patch(
         f'{_EMPLOYEES}/{eid}',
-        json={'first_name': 'Novo'},
+        json={'first_name': 'Updated'},
     )
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()['first_name'] == 'Novo'
+    assert response.json()['first_name'] == 'Updated'
     mock_employee_use_case.update_employee.assert_awaited_once()
 
 
