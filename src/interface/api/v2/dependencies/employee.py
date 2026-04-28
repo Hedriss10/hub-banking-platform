@@ -12,9 +12,7 @@ from src.interface.api.v2.dependencies.common.session import VerifiedSessionDep
 async def get_employee_controller(
     session: VerifiedSessionDep,
 ) -> EmployeeController:
-    """
-    Singleton para o controller de companias.
-    """
+    """Wires repository, service, use case, and controller per request."""
     employee_repository = EmployeeRepositoryPostgres(session)
     employee_service = EmployeeService(employee_repository)
     employee_use_case = EmployeeUseCase(employee_service)

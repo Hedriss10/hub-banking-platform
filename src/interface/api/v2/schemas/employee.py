@@ -14,7 +14,7 @@ class EmployeeCreateSchema(BaseModel):
     last_name: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)
     ] = Field(
-        description='Sobrenome',
+        description='Last name',
     )
     document: Annotated[
         str,
@@ -24,7 +24,7 @@ class EmployeeCreateSchema(BaseModel):
             max_length=14,
             pattern=r'^[\d.\-\s]+$',
         ),
-    ] = Field(description='CPF/documento')
+    ] = Field(description='Government ID document (e.g. CPF)')
     email: Annotated[EmailStr, StringConstraints(strip_whitespace=True, max_length=320)]
     password: str = Field(
         ...,

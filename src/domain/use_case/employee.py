@@ -18,14 +18,14 @@ class EmployeeUseCase:
         try:
             return await self.employee_service.create_employee(employee)
         except DuplicatedException as error:
-            raise EmployeeAlreadyExistsException(
-                'Já existe funcionário com este e-mail ou documento.'
-            ) from error
+            raise EmployeeAlreadyExistsException() from error
 
     async def get_employee(self, employee_id: UUID) -> EmployeeDTO:
         employee = await self.employee_service.get_employee(employee_id)
         if not employee:
-            raise EmployeeNotFoundException('Funcionário não encontrado')
+            raise EmployeeNotFoundException(
+                message=f'Employee with id {employee_id} not found',
+            )
         return employee
 
     async def update_employee(
@@ -33,18 +33,20 @@ class EmployeeUseCase:
     ) -> EmployeeDTO:
         employee_existing = await self.employee_service.get_employee(employee_id)
         if not employee_existing:
-            raise EmployeeNotFoundException('Funcionário não encontrado')
+            raise EmployeeNotFoundException(
+                message=f'Employee with id {employee_id} not found',
+            )
         try:
             return await self.employee_service.update_employee(employee_id, payload)
         except DuplicatedException as error:
-            raise EmployeeAlreadyExistsException(
-                'Já existe funcionário com este e-mail ou documento.'
-            ) from error
+            raise EmployeeAlreadyExistsException() from error
 
     async def delete_employee(self, employee_id: UUID) -> None:
         employee_existing = await self.employee_service.get_employee(employee_id)
         if not employee_existing:
-            raise EmployeeNotFoundException('Funcionário não encontrado')
+            raise EmployeeNotFoundException(
+                message=f'Employee with id {employee_id} not found',
+            )
         await self.employee_service.delete_employee(employee_id)
 
     async def list_employee(self) -> List[EmployeeDTO]:

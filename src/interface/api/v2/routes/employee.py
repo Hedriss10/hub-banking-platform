@@ -11,8 +11,8 @@ from src.interface.api.v2.schemas.employee import (
 )
 
 tags_metadata = {
-    'name': 'Funcionários',
-    'description': ('Modulo de funcionários.'),
+    'name': 'Employees',
+    'description': 'Employee management module.',
 }
 
 
@@ -26,8 +26,8 @@ router = APIRouter(
     '',
     response_model=EmployeeSchema,
     status_code=status.HTTP_201_CREATED,
-    summary='Cria um novo funcionário',
-    description='Cria um novo funcionário',
+    summary='Create employee',
+    description='Registers a new employee.',
 )
 async def create_employee(
     employee: EmployeeCreateSchema,
@@ -40,8 +40,8 @@ async def create_employee(
     '',
     response_model=List[EmployeeSchema],
     status_code=status.HTTP_200_OK,
-    summary='Lista todos os funcionários',
-    description='Lista todos os funcionários',
+    summary='List employees',
+    description='Lists all non-deleted employees.',
 )
 async def list_employees(
     controller: EmployeeRepositoryDep,
@@ -53,8 +53,8 @@ async def list_employees(
     '/{employee_id}',
     response_model=EmployeeSchema,
     status_code=status.HTTP_200_OK,
-    summary='Obtém um funcionário',
-    description='Obtém um funcionário',
+    summary='Get employee',
+    description='Gets an employee by id.',
 )
 async def get_employee(
     employee_id: UUID,
@@ -67,8 +67,8 @@ async def get_employee(
     '/{employee_id}',
     response_model=EmployeeSchema,
     status_code=status.HTTP_200_OK,
-    summary='Atualiza um funcionário',
-    description='Atualiza um funcionário',
+    summary='Update employee',
+    description='Updates an employee.',
 )
 async def update_employee(
     employee_id: UUID,
@@ -81,12 +81,12 @@ async def update_employee(
 @router.delete(
     '/{employee_id}',
     status_code=status.HTTP_204_NO_CONTENT,
-    summary='Deleta um funcionário',
-    description='Deleta um funcionário',
+    summary='Delete employee',
+    description='Logically deletes an employee.',
 )
 async def delete_employee(
     employee_id: UUID,
     controller: EmployeeRepositoryDep,
-) -> None:
+) -> Response:
     await controller.delete_employee(employee_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

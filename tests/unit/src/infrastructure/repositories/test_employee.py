@@ -192,7 +192,7 @@ async def test_update_employee_empty_payload_not_found_raises(
         AsyncMock(return_value=None),
     )
 
-    with pytest.raises(DatabaseException, match='Funcionário não encontrado'):
+    with pytest.raises(DatabaseException, match='Employee not found'):
         await repository.update_employee(uuid4(), EmployeeUpdateDTO())
 
 
@@ -285,7 +285,7 @@ async def test_update_employee_no_row_raises(
     result_mock.scalar_one_or_none = MagicMock(return_value=None)
     mock_session.execute = AsyncMock(return_value=result_mock)
 
-    with pytest.raises(DatabaseException, match='Funcionário não encontrado'):
+    with pytest.raises(DatabaseException, match='Employee not found'):
         await repository.update_employee(employee_dto.id, payload)
 
     mock_session.rollback.assert_awaited_once()
