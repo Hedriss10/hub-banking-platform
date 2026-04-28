@@ -222,3 +222,41 @@ async def async_financial_agreements_client(
 
     v2_test_app.dependency_overrides.pop(get_financial_agreements_controller, None)
     v2_test_app.dependency_overrides.pop(get_current_employee_id, None)
+
+
+@pytest.fixture
+def mock_loan_operation_use_case() -> AsyncMock:
+    return AsyncMock()
+
+
+@pytest.fixture
+async def async_loan_operation_client(
+    v2_test_app: FastAPI,
+    mock_loan_operation_use_case: AsyncMock,
+) -> AsyncGenerator[AsyncClient, None]:
+    from src.interface.api.v2.controller.loan_operation import LoanOperationController
+    from src.interface.api.v2.dependencies.common.auth_employee import (
+        get_current_employee_id,
+    )
+    from src.interface.api.v2.dependencies.loan_operation import (
+        get_loan_operation_controller,
+    )
+
+    controller = LoanOperationController(mock_loan_operation_use_case)
+
+    async def _override_controller() -> LoanOperationController:
+        return controller
+
+    async def _override_employee() -> UUID:
+        return uuid.uuid4()
+
+    v2_test_app.dependency_overrides[get_loan_operation_controller] = (
+        _override_controller
+    )
+    v2_test_app.dependency_overrides[get_current_employee_id] = _override_employee
+
+    async with async_client_for_app(v2_test_app) as client:
+        yield client
+
+    v2_test_app.dependency_overrides.pop(get_loan_operation_controller, None)
+    v2_test_app.dependency_overrides.pop(get_current_employee_id, None)
