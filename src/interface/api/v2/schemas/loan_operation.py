@@ -4,21 +4,19 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 
-class FinancialAgreementsCreateSchema(BaseModel):
-    name: str
-    bank_id: UUID
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-
-class FinancialAgreementsUpdateSchema(BaseModel):
+class LoanOperationCreateSchema(BaseModel):
     name: str
     model_config = ConfigDict(str_strip_whitespace=True)
 
 
-class FinancialAgreementsOutSchema(BaseModel):
+class LoanOperationUpdateSchema(BaseModel):
+    name: str
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+
+class LoanOperationOutSchema(BaseModel):
     id: UUID
     name: str
-    bank_id: UUID
     created_at: datetime
     updated_at: datetime
     is_deleted: bool
