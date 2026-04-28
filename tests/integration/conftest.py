@@ -193,3 +193,21 @@ async def created_by_employee_id(
     await async_session.commit()
     await async_session.refresh(employee)
     yield employee.id
+
+
+@asyncio_fixture(scope='function', loop_scope='session')
+async def list_loan_operation(
+    async_session: AsyncSession,
+    created_by_employee_id: UUID,
+) -> AsyncGenerator[list, None]:
+    from src.infrastructure.database.models.loan_operation import LoanOperation
+
+    operations = [
+        LoanOperation(name='Loan Operation', created_by=created_by_employee_id),
+        LoanOperation(name='Loan Operation Alt', created_by=created_by_employee_id),
+    ]
+    async_session.add_all(operations)
+    await async_session.commit()
+    for op in operations:
+        await async_session.refresh(op)
+    yield operations
