@@ -50,6 +50,30 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = 'HS256'
     JWT_EXPIRE_MINUTES: int = 36000
 
+    # S3 / Contabo Object Storage
+    AWS_REGION: str = ''
+    AWS_S3_BUCKET_NAME: str = ''
+    AWS_S3_PUBLIC_BASE_URL: str = ''
+    AWS_S3_ENDPOINT_URL: str = ''
+    AWS_S3_PUBLIC_READ: bool = False
+    AWS_S3_ADDRESSING_STYLE: str = 'path'
+    AWS_ACCESS_KEY_ID: str = ''
+    AWS_SECRET_ACCESS_KEY: str = ''
+    S3_UPLOAD_MAX_SIZE_MB: int = 5
+    S3_ALLOWED_IMAGE_CONTENT_TYPES: str = 'image/jpeg,image/png,image/webp'
+    S3_PROPOSAL_UPLOAD_MAX_SIZE_MB: int = 10
+    S3_PROPOSAL_UPLOAD_MAX_FILES: int = 20
+    S3_ALLOWED_PROPOSAL_CONTENT_TYPES: str = (
+        'image/jpeg,image/png,image/webp,application/pdf'
+    )
+
+    CONTABO_REGION: str = ''
+    CONTABO_S3_BUCKET_NAME: str = ''
+    CONTABO_S3_PUBLIC_BASE_URL: str = ''
+    CONTABO_S3_ENDPOINT_URL: str = ''
+    CONTABO_ACCESS_KEY_ID: str = ''
+    CONTABO_SECRET_ACCESS_KEY: str = ''
+
     @field_validator('BACKEND_CORS_ORIGINS', mode='before')
     def split_origins(cls, value: Any) -> Union[List[str], List[AnyHttpUrl]]:
         """
@@ -68,6 +92,22 @@ class Settings(BaseSettings):
                 f'postgresql+asyncpg://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}'
                 f'@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}'
             )
+        return self
+
+    @model_validator(mode='after')
+    def normalize_contabo_s3_settings(self) -> 'Settings':
+        if not self.AWS_REGION:
+            self.AWS_REGION = self.CONTABO_REGION
+        if not self.AWS_S3_BUCKET_NAME:
+            self.AWS_S3_BUCKET_NAME = self.CONTABO_S3_BUCKET_NAME
+        if not self.AWS_S3_PUBLIC_BASE_URL:
+            self.AWS_S3_PUBLIC_BASE_URL = self.CONTABO_S3_PUBLIC_BASE_URL
+        if not self.AWS_S3_ENDPOINT_URL:
+            self.AWS_S3_ENDPOINT_URL = self.CONTABO_S3_ENDPOINT_URL
+        if not self.AWS_ACCESS_KEY_ID:
+            self.AWS_ACCESS_KEY_ID = self.CONTABO_ACCESS_KEY_ID
+        if not self.AWS_SECRET_ACCESS_KEY:
+            self.AWS_SECRET_ACCESS_KEY = self.CONTABO_SECRET_ACCESS_KEY
         return self
 
 

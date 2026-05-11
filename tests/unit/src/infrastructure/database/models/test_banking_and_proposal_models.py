@@ -4,7 +4,7 @@ from src.infrastructure.database.models.financial_agreements import (
     FinancialAgreementsModel,
 )
 from src.infrastructure.database.models.proposal import ProposalModel
-from src.infrastructure.database.models.proposal_acount import (
+from src.infrastructure.database.models.proposal_account import (
     ProposalPaymentAccountModel,
 )
 from src.infrastructure.database.models.proposal_document import ProposalDocumentModel
