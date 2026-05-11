@@ -1,5 +1,8 @@
 from enum import Enum
+from typing import Optional
+from uuid import UUID
 
+from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +12,7 @@ from src.domain.dtos.proposal import (
     ProposalAggregateCreateDTO,
     ProposalAggregateOutDTO,
     ProposalOutDTO,
+    ProposalUpdateDTO,
 )
 from src.domain.dtos.proposal_account import (
     CreatedProposalAccountDTO,
@@ -55,9 +59,123 @@ def _enum_value(value: object, enum_class: type[Enum]) -> Enum | None:
     return enum_class(value)
 
 
+def _proposal_update_values(payload: ProposalUpdateDTO) -> dict[str, object]:
+    raw = payload.model_dump(exclude_unset=True, exclude_none=True)
+    if 'document' in raw:
+        raw['document'] = _enum_value(raw['document'], DocumentType)
+    if 'gender' in raw:
+        raw['gender'] = _enum_value(raw['gender'], Gender)
+    return raw
+
+
 class ProposalPostgresRepository(IProposalRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
+
+    async def _proposal_children_aggregate(
+        self, proposal_row: ProposalModel
+    ) -> ProposalAggregateOutDTO:
+        pid = proposal_row.id
+
+        acc_stmt = (
+            select(ProposalPaymentAccountModel)
+            .where(ProposalPaymentAccountModel.proposal_id.__eq__(pid))
+            .where(ProposalPaymentAccountModel.is_deleted.is_(False))
+            .limit(1)
+        )
+        acc_result = await self.session.execute(acc_stmt)
+        account_row = acc_result.scalar_one_or_none()
+
+        doc_stmt = (
+            select(ProposalDocumentModel)
+            .where(ProposalDocumentModel.proposal_id.__eq__(pid))
+            .where(ProposalDocumentModel.is_deleted.is_(False))
+        )
+        doc_rows = (await self.session.execute(doc_stmt)).scalars().all()
+
+        loan_stmt = (
+            select(ProposalLoanModel)
+            .where(ProposalLoanModel.proposal_id.__eq__(pid))
+            .where(ProposalLoanModel.is_deleted.is_(False))
+        )
+        loan_rows = (await self.session.execute(loan_stmt)).scalars().all()
+
+        return ProposalAggregateOutDTO(
+            proposal=_row_to_dto(proposal_row, ProposalOutDTO),
+            account=(
+                _row_to_dto(account_row, ProposalAccountOutDTO)
+                if account_row is not None
+                else None
+            ),
+            documents=[_row_to_dto(dr, ProposalDocumentOutDTO) for dr in doc_rows],
+            loans=[_row_to_dto(lr, ProposalLoanOutDTO) for lr in loan_rows],
+        )
+
+    async def get_proposal_aggregate_by_id(
+        self, proposal_id: UUID
+    ) -> Optional[ProposalAggregateOutDTO]:
+        try:
+            proposal_stmt = (
+                select(ProposalModel)
+                .where(ProposalModel.id.__eq__(proposal_id))
+                .where(ProposalModel.is_deleted.is_(False))
+            )
+            proposal_result = await self.session.execute(proposal_stmt)
+            proposal_row = proposal_result.scalar_one_or_none()
+            if proposal_row is None:
+                return None
+            return await self._proposal_children_aggregate(proposal_row)
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
+
+    async def list_proposals(self) -> list[ProposalOutDTO]:
+        try:
+            stmt = (
+                select(ProposalModel)
+                .where(ProposalModel.is_deleted.is_(False))
+                .order_by(ProposalModel.updated_at.desc())
+            )
+            rows = list((await self.session.execute(stmt)).scalars())
+            return [_row_to_dto(row, ProposalOutDTO) for row in rows]
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
+
+    async def update_proposal(
+        self, proposal_id: UUID, payload: ProposalUpdateDTO
+    ) -> Optional[ProposalAggregateOutDTO]:
+        try:
+            values = _proposal_update_values(payload)
+            if not values:
+                return await self.get_proposal_aggregate_by_id(proposal_id)
+
+            stmt = (
+                update(ProposalModel)
+                .where(ProposalModel.id.__eq__(proposal_id))
+                .where(ProposalModel.is_deleted.is_(False))
+                .values(**values)
+            )
+            await self.session.execute(stmt)
+            await self.session.commit()
+            return await self.get_proposal_aggregate_by_id(proposal_id)
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
+
+    async def soft_delete_proposal(self, proposal_id: UUID) -> None:
+        try:
+            stmt = (
+                update(ProposalModel)
+                .where(ProposalModel.id.__eq__(proposal_id))
+                .where(ProposalModel.is_deleted.is_(False))
+                .values(is_deleted=True)
+            )
+            await self.session.execute(stmt)
+            await self.session.commit()
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
 
     async def create_proposal_with_relations(
         self, payload: ProposalAggregateCreateDTO

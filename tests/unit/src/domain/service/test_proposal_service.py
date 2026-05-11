@@ -8,6 +8,7 @@ from src.domain.dtos.proposal import (
     ProposalAggregateCreateDTO,
     ProposalAggregateOutDTO,
     ProposalOutDTO,
+    ProposalUpdateDTO,
 )
 from src.domain.dtos.proposal_account import CreatedProposalAccountDTO
 from src.domain.dtos.proposal_document import CreatedProposalDocumentDTO
@@ -105,3 +106,37 @@ async def test_create_proposal_loan(service: ProposalService, repo: AsyncMock) -
     loan = CreatedProposalLoanDTO(created_by=eid)
     repo.create_proposal_loan = AsyncMock(return_value=loan)
     assert await service.create_proposal_loan(loan) is loan
+
+
+@pytest.mark.asyncio
+async def test_service_list_get_update_delete_delegate_to_repo(
+    service: ProposalService, repo: AsyncMock
+) -> None:
+    pid = uuid4()
+    agg = ProposalAggregateOutDTO(
+        proposal=ProposalOutDTO(
+            id=pid,
+            name='A',
+            financial_agreements_id=uuid4(),
+            cpf='12345678901234',
+            place_of_birth='SP',
+            created_by=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            is_deleted=False,
+        ),
+    )
+    dto = ProposalUpdateDTO(name='B')
+
+    repo.get_proposal_aggregate_by_id = AsyncMock(return_value=agg)
+    assert await service.get_proposal_aggregate_by_id(pid) is agg
+
+    repo.list_proposals = AsyncMock(return_value=[agg.proposal])
+    assert await service.list_proposals() == [agg.proposal]
+
+    repo.update_proposal = AsyncMock(return_value=agg)
+    assert await service.update_proposal(pid, dto) is agg
+
+    repo.soft_delete_proposal = AsyncMock()
+    await service.soft_delete_proposal(pid)
+    repo.soft_delete_proposal.assert_awaited_with(pid)

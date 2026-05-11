@@ -110,6 +110,48 @@ class ProposalCreateSchema(BaseModel):
     loans: list[ProposalLoanSchema] = Field(default_factory=list)
 
 
+class ProposalUpdateSchema(BaseModel):
+    """Partial update only for fields of the proposal entity itself."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=30)
+    document: Optional[DocumentType] = Field(
+        default=None,
+        description=(
+            'Tipo de documento oficial (CPF, RG, CNH…). '
+            'Não enviar número aqui — use cpf ou rg_document.'
+        ),
+    )
+    birth_date: Optional[datetime] = None
+    financial_agreements_id: Optional[UUID] = None
+    gender: Optional[Gender] = None
+    email: Optional[EmailStr] = None
+    cpf: Optional[str] = Field(default=None, min_length=11, max_length=20)
+    place_of_birth: Optional[str] = None
+    birth_city: Optional[str] = None
+    birth_state: Optional[str] = None
+    rg_document: Optional[str] = None
+    issuing_authority: Optional[str] = None
+    issuing_state: Optional[str] = None
+    mother_name: Optional[str] = None
+    father_name: Optional[str] = None
+    neighborhood: Optional[str] = None
+    address: Optional[str] = None
+    address_number: Optional[str] = None
+    address_complement: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    gross_salary: Optional[Decimal] = None
+    net_salary: Optional[Decimal] = None
+    mobile_phone: Optional[str] = None
+    home_phone: Optional[str] = None
+    work_phone: Optional[str] = None
+    notes: Optional[str] = None
+    issue_date: Optional[datetime] = None
+
+
 class ProposalRecordOutSchema(ProposalBaseSchema):
     id: UUID
     created_at: datetime

@@ -66,6 +66,70 @@ async def test_post_create_proposal(
 
 
 @pytest.mark.asyncio
+async def test_get_list_proposals(
+    async_proposal_client: AsyncClient,
+    mock_proposal_use_case: AsyncMock,
+) -> None:
+    eid = uuid4()
+    out = _aggregate_out(eid)
+    mock_proposal_use_case.list_proposals = AsyncMock(return_value=[out.proposal])
+
+    response = await async_proposal_client.get(_PROPOSALS)
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]['id'] == str(out.proposal.id)
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_by_id(
+    async_proposal_client: AsyncClient,
+    mock_proposal_use_case: AsyncMock,
+) -> None:
+    eid = uuid4()
+    out = _aggregate_out(eid)
+    mock_proposal_use_case.get_proposal_aggregate = AsyncMock(return_value=out)
+
+    pid = out.proposal.id
+    response = await async_proposal_client.get(f'{_PROPOSALS}/{pid}')
+    assert response.status_code == status.HTTP_200_OK
+    body = response.json()
+    assert body['proposal']['id'] == str(pid)
+
+
+@pytest.mark.asyncio
+async def test_patch_update_proposal(
+    async_proposal_client: AsyncClient,
+    mock_proposal_use_case: AsyncMock,
+) -> None:
+    eid = uuid4()
+    out = _aggregate_out(eid)
+    mock_proposal_use_case.update_proposal = AsyncMock(return_value=out)
+
+    pid = out.proposal.id
+    response = await async_proposal_client.patch(
+        f'{_PROPOSALS}/{pid}',
+        json={'name': 'Cliente atualizado'},
+    )
+    assert response.status_code == status.HTTP_200_OK
+    mock_proposal_use_case.update_proposal.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_proposal(
+    async_proposal_client: AsyncClient,
+    mock_proposal_use_case: AsyncMock,
+) -> None:
+    mock_proposal_use_case.delete_proposal = AsyncMock(return_value=None)
+    pid = uuid4()
+    response = await async_proposal_client.delete(f'{_PROPOSALS}/{pid}')
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.content == b''
+    mock_proposal_use_case.delete_proposal.assert_awaited_once_with(pid)
+
+
+@pytest.mark.asyncio
 async def test_post_upload_proposal_documents_success(
     async_proposal_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

@@ -11,4 +11,3 @@ def test_proposal_not_found_exception_default() -> None:
     assert exc.status_code == HTTPStatus.NOT_FOUND.value
     assert exc.code == 'PROPOSAL_NOT_FOUND'
     assert exc.message == 'Proposta não encontrada'
-    assert exc.message == 'Proposta não encontrada'

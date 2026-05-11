@@ -1,6 +1,7 @@
-from typing import Annotated
+from typing import Annotated, List
+from uuid import UUID
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile, status
 
 from src.infrastructure.storage.s3_service import upload_proposal_document_files
 from src.interface.api.v2.dependencies.common.auth_employee import CurrentEmployeeIdDep
@@ -10,6 +11,8 @@ from src.interface.api.v2.schemas.proposal import (
     ProposalDocumentsUploadOutSchema,
     ProposalDocumentUploadItemSchema,
     ProposalOutSchema,
+    ProposalRecordOutSchema,
+    ProposalUpdateSchema,
 )
 
 tags_metadata = {
@@ -64,6 +67,23 @@ async def upload_proposal_documents(
     )
 
 
+@router.get(
+    '',
+    response_model=List[ProposalRecordOutSchema],
+    status_code=status.HTTP_200_OK,
+    summary='List proposals',
+    description=(
+        'Lists non-deleted proposals (proposal row only); ordered by `updated_at` desc.'
+    ),
+)
+async def list_proposals(
+    controller: ProposalControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[ProposalRecordOutSchema]:
+    _ = _employee_id
+    return await controller.list_proposals()
+
+
 @router.post(
     '',
     response_model=ProposalOutSchema,
@@ -81,3 +101,57 @@ async def create_proposal(
     _employee_id: CurrentEmployeeIdDep,
 ) -> ProposalOutSchema:
     return await controller.create_proposal(proposal, _employee_id)
+
+
+@router.get(
+    '/{proposal_id}',
+    response_model=ProposalOutSchema,
+    status_code=status.HTTP_200_OK,
+    summary='Get proposal by id',
+    description=(
+        'Returns proposal with account, uploaded documents references, and loans '
+        '(non-deleted children).'
+    ),
+)
+async def get_proposal(
+    proposal_id: UUID,
+    controller: ProposalControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> ProposalOutSchema:
+    _ = _employee_id
+    return await controller.get_proposal(proposal_id)
+
+
+@router.patch(
+    '/{proposal_id}',
+    response_model=ProposalOutSchema,
+    status_code=status.HTTP_200_OK,
+    summary='Update proposal',
+    description=(
+        'Partial update of the proposal entity only (not account, documents, or loans).'
+    ),
+)
+async def update_proposal(
+    proposal_id: UUID,
+    patch: ProposalUpdateSchema,
+    controller: ProposalControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> ProposalOutSchema:
+    _ = _employee_id
+    return await controller.update_proposal(proposal_id, patch)
+
+
+@router.delete(
+    '/{proposal_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Delete proposal',
+    description='Soft-deletes the proposal row (`is_deleted=true`).',
+)
+async def delete_proposal(
+    proposal_id: UUID,
+    controller: ProposalControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> Response:
+    _ = _employee_id
+    await controller.delete_proposal(proposal_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

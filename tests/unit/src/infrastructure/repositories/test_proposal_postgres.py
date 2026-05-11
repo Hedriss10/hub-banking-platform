@@ -9,6 +9,9 @@ from src.core.exceptions.custom import DatabaseException
 from src.domain.dtos.proposal import (
     CreatedProposalDTO,
     ProposalAggregateCreateDTO,
+    ProposalAggregateOutDTO,
+    ProposalOutDTO,
+    ProposalUpdateDTO,
 )
 from src.domain.dtos.proposal_account import CreatedProposalAccountDTO
 from src.domain.dtos.proposal_document import CreatedProposalDocumentDTO
@@ -18,9 +21,11 @@ from src.domain.enum.gender import Gender
 from src.domain.enum.proposal_loan import ProposalLoanStatus
 from src.infrastructure.database.models.common.document import DocumentType
 from src.infrastructure.database.models.common.gender import Gender as SaGender
+from src.infrastructure.database.models.proposal import ProposalModel
 from src.infrastructure.repositories.proposal_postgres import (
     ProposalPostgresRepository,
     _enum_value,
+    _proposal_update_values,
     _row_to_dto,
 )
 
@@ -383,3 +388,218 @@ async def test_create_proposal_without_account_or_children(
     assert out.account is None
     assert out.documents == []
     assert out.loans == []
+
+
+def _proposal_sqlalchemy_row(**overrides: object) -> ProposalModel:
+    base = dict(
+        id=uuid4(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        is_deleted=False,
+        name='N',
+        financial_agreements_id=uuid4(),
+        cpf='12345678901234',
+        created_by=uuid4(),
+    )
+    base.update(overrides)
+    return ProposalModel(**base)  # type: ignore[arg-type]
+
+
+def test_proposal_update_values_maps_enums_for_storage() -> None:
+    dto = ProposalUpdateDTO(
+        document=DomainDocumentType.CNH,
+        gender=Gender.FEMALE,
+    )
+    mapped = _proposal_update_values(dto)
+    assert mapped['document'] == DocumentType.CNH
+    assert mapped['gender'] == SaGender.FEMALE
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_aggregate_by_id_not_found(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    empty = MagicMock()
+    empty.scalar_one_or_none.return_value = None
+    mock_session.execute = AsyncMock(return_value=empty)
+    assert await repository.get_proposal_aggregate_by_id(uuid4()) is None
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_aggregate_by_id_found_empty_children(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    p = _proposal_sqlalchemy_row()
+
+    def make_scalar(one: ProposalModel | None) -> MagicMock:
+        m = MagicMock()
+        m.scalar_one_or_none.return_value = one
+        return m
+
+    chain_empty = MagicMock()
+    chain_empty.all.return_value = []
+    doc_mock = MagicMock()
+    doc_mock.scalars.return_value = chain_empty
+    loan_mock = MagicMock()
+    loan_mock.scalars.return_value = chain_empty
+    exec_queue = [
+        make_scalar(p),
+        make_scalar(None),
+        doc_mock,
+        loan_mock,
+    ]
+    mock_session.execute = AsyncMock(side_effect=exec_queue)
+
+    out = await repository.get_proposal_aggregate_by_id(p.id)
+    assert out is not None
+    assert out.proposal.name == 'N'
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_aggregate_by_id_db_error_rollbacks(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('err'))
+    with pytest.raises(DatabaseException):
+        await repository.get_proposal_aggregate_by_id(uuid4())
+    mock_session.rollback.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_list_proposals_returns_rows(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    p = _proposal_sqlalchemy_row(name='Listed')
+    res = MagicMock()
+    res.scalars.return_value = iter([p])
+    mock_session.execute = AsyncMock(return_value=res)
+
+    rows = await repository.list_proposals()
+    assert len(rows) == 1
+    assert rows[0].name == 'Listed'
+
+
+@pytest.mark.asyncio
+async def test_list_proposals_db_error_rollbacks(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('e'))
+    with pytest.raises(DatabaseException):
+        await repository.list_proposals()
+    mock_session.rollback.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_proposal_empty_payload_refetches_aggregate(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    pid = uuid4()
+    agg = ProposalAggregateOutDTO(
+        proposal=ProposalOutDTO(
+            id=pid,
+            name='R',
+            financial_agreements_id=uuid4(),
+            cpf='12345678901234',
+            place_of_birth='SP',
+            created_by=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            is_deleted=False,
+        ),
+    )
+
+    repository.get_proposal_aggregate_by_id = AsyncMock(return_value=agg)
+
+    assert await repository.update_proposal(pid, ProposalUpdateDTO()) is agg
+
+    mock_session.execute.assert_not_called()
+    mock_session.commit.assert_not_called()
+    repository.get_proposal_aggregate_by_id.assert_awaited_once_with(pid)
+
+
+@pytest.mark.asyncio
+async def test_update_proposal_with_values_commit_and_refetch(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    pid = uuid4()
+    agg = ProposalAggregateOutDTO(
+        proposal=ProposalOutDTO(
+            id=pid,
+            name='R',
+            financial_agreements_id=uuid4(),
+            cpf='12345678901234',
+            place_of_birth='SP',
+            created_by=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            is_deleted=False,
+        ),
+    )
+
+    repository.get_proposal_aggregate_by_id = AsyncMock(return_value=agg)
+    mock_session.execute = AsyncMock()
+    mock_session.commit = AsyncMock()
+
+    await repository.update_proposal(pid, ProposalUpdateDTO(name='X'))
+
+    mock_session.commit.assert_awaited_once()
+    repository.get_proposal_aggregate_by_id.assert_awaited_once_with(pid)
+
+
+@pytest.mark.asyncio
+async def test_soft_delete_proposal_commit(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock()
+    mock_session.commit = AsyncMock()
+    pid = uuid4()
+    await repository.soft_delete_proposal(pid)
+    mock_session.execute.assert_awaited_once()
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_proposal_rollback_on_error(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    pid = uuid4()
+    agg = ProposalAggregateOutDTO(
+        proposal=ProposalOutDTO(
+            id=pid,
+            name='R',
+            financial_agreements_id=uuid4(),
+            cpf='12345678901234',
+            place_of_birth='SP',
+            created_by=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            is_deleted=False,
+        ),
+    )
+    repository.get_proposal_aggregate_by_id = AsyncMock(return_value=agg)
+
+    mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('fail'))
+    with pytest.raises(DatabaseException):
+        await repository.update_proposal(pid, ProposalUpdateDTO(name='Y'))
+
+    mock_session.rollback.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_soft_delete_rollback_on_error(
+    repository: ProposalPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('e'))
+    with pytest.raises(DatabaseException):
+        await repository.soft_delete_proposal(uuid4())
+    mock_session.rollback.assert_awaited()

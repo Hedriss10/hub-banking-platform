@@ -8,4 +8,7 @@ class ProposalNotFoundException(DomainException):
 
     status_code: int = HTTPStatus.NOT_FOUND.value
     code: str = 'PROPOSAL_NOT_FOUND'
-    message: str = 'Proposta não encontrada'
+
+    def __init__(self, message: str = 'Proposta não encontrada') -> None:
+        self.message = message
+        super().__init__(message)

@@ -11,6 +11,7 @@ from src.interface.api.v2.schemas.proposal import (
     ProposalCreateSchema,
     ProposalDocumentSchema,
     ProposalLoanSchema,
+    ProposalUpdateSchema,
 )
 
 pytestmark = pytest.mark.unit
@@ -96,3 +97,29 @@ async def test_controller_create_proposal_with_nested(
     assert call_arg.account.bank_agency == '1'
     assert len(call_arg.documents) == 1
     assert len(call_arg.loans) == 1
+
+
+@pytest.mark.asyncio
+async def test_controller_list_get_update_delete_delegates(
+    controller: ProposalController, use_case: AsyncMock
+) -> None:
+    eid = uuid4()
+    out = _minimal_out(eid)
+    pid = out.proposal.id
+
+    use_case.list_proposals = AsyncMock(return_value=[out.proposal])
+    listed = await controller.list_proposals()
+    assert listed[0].id == pid
+
+    use_case.get_proposal_aggregate = AsyncMock(return_value=out)
+    got = await controller.get_proposal(pid)
+    assert got.proposal.id == pid
+
+    patched = ProposalUpdateSchema(name='Novo nome')
+    use_case.update_proposal = AsyncMock(return_value=out)
+    await controller.update_proposal(pid, patched)
+    use_case.update_proposal.assert_awaited_once()
+
+    use_case.delete_proposal = AsyncMock()
+    await controller.delete_proposal(pid)
+    use_case.delete_proposal.assert_awaited_once_with(pid)
