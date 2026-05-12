@@ -36,7 +36,7 @@ async def test_get_current_employee_id_expired(
 
     monkeypatch.setattr(auth_mod, 'decode_access_token', _raise)
     creds = HTTPAuthorizationCredentials(scheme='Bearer', credentials='tok')
-    with pytest.raises(InvalidOrExpiredTokenException, match='expirou'):
+    with pytest.raises(InvalidOrExpiredTokenException, match='Access token expired'):
         await get_current_employee_id(creds)
 
 
@@ -49,7 +49,7 @@ async def test_get_current_employee_id_invalid(
 
     monkeypatch.setattr(auth_mod, 'decode_access_token', _raise)
     creds = HTTPAuthorizationCredentials(scheme='Bearer', credentials='tok')
-    with pytest.raises(InvalidOrExpiredTokenException, match='inválido'):
+    with pytest.raises(InvalidOrExpiredTokenException, match='Invalid access token'):
         await get_current_employee_id(creds)
 
 
@@ -59,5 +59,5 @@ async def test_get_current_employee_id_missing_id(
 ) -> None:
     monkeypatch.setattr(auth_mod, 'decode_access_token', lambda _t: {})
     creds = HTTPAuthorizationCredentials(scheme='Bearer', credentials='tok')
-    with pytest.raises(InvalidOrExpiredTokenException, match='identificador'):
+    with pytest.raises(InvalidOrExpiredTokenException, match='employee identifier'):
         await get_current_employee_id(creds)

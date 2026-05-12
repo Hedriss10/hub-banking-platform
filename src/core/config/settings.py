@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     CONTABO_ACCESS_KEY_ID: str = ''
     CONTABO_SECRET_ACCESS_KEY: str = ''
 
+    # Safra
+    API_SAFRA_BASE_URL: str = ''
+    API_SAFRA_TIMEOUT: float = 10.0
+    API_SAFRA_DEFAULT_HEADERS: dict[str, str] = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    }
+    API_SAFRA_USERNAME: str = ''
+    API_SAFRA_PASSWORD: str = ''
+
     @field_validator('BACKEND_CORS_ORIGINS', mode='before')
     def split_origins(cls, value: Any) -> Union[List[str], List[AnyHttpUrl]]:
         """

@@ -1,5 +1,6 @@
 from typing import Union
 
+import httpx
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -49,6 +50,21 @@ async def custom_exception_handler(
     request: Request,
     exc: Union[DomainException, MultipleException, InfrastructureException, Exception],
 ) -> JSONResponse:
+    if isinstance(exc, httpx.HTTPStatusError):
+        resp = exc.response
+        text = (resp.text or '')[:2000]
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content=sanitize_for_json({
+                'code': 'UPSTREAM_HTTP_ERROR',
+                'message': (
+                    'Chamada HTTP a serviço externo falhou. '
+                    'Veja upstream_status e upstream_body (resposta da API remota).'
+                ),
+                'upstream_status': resp.status_code,
+                'upstream_body': text,
+            }),
+        )
     if isinstance(exc, MultipleException):
         status_code = getattr(exc, 'status_code', status.HTTP_400_BAD_REQUEST)
         errors = []

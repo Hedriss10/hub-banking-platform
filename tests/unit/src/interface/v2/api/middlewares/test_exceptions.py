@@ -1,6 +1,7 @@
 import json
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -14,6 +15,7 @@ from src.interface.api.v2.middlewares.exceptions import (
     request_validation_exception_handler,
     sanitize_for_json,
 )
+from starlette import status
 
 STATUS_CODE_422 = 422
 
@@ -56,6 +58,19 @@ class TestCustomExceptionHandler:
         exc = ValueError('Qualquer erro')
         response = await custom_exception_handler(request_mock, exc)
         assert response.status_code == status_code
+
+    async def test_httpx_http_status_error_returns_502_with_upstream_body(
+        self, request_mock
+    ):
+        req = httpx.Request('GET', 'http://upstream.example/api')
+        resp = httpx.Response(401, request=req, content=b'{"detail":"nope"}')
+        exc = httpx.HTTPStatusError('bad', request=req, response=resp)
+        response = await custom_exception_handler(request_mock, exc)
+        assert response.status_code == status.HTTP_502_BAD_GATEWAY
+        body = json.loads(response.body.decode())
+        assert body['code'] == 'UPSTREAM_HTTP_ERROR'
+        assert body['upstream_status'] == status.HTTP_401_UNAUTHORIZED
+        assert 'nope' in body['upstream_body']
 
 
 @pytest.mark.unit
