@@ -27,8 +27,8 @@ router = APIRouter(
     '',
     response_model=BankerOutSchema,
     status_code=status.HTTP_201_CREATED,
-    summary='Criar um novo banco',
-    description='Cria um novo banco (regista quem criou via token JWT).',
+    summary='Create a new banker',
+    description='Create a new banker (registers who created via token JWT).',
 )
 async def create_banker(
     banker: BankerCreateSchema,
@@ -42,8 +42,8 @@ async def create_banker(
     '',
     response_model=List[BankerOutSchema],
     status_code=status.HTTP_200_OK,
-    summary='Listar bancos',
-    description='Lista bancos ativos',
+    summary='List bankers',
+    description='List bankers active',
 )
 async def list_bankers(
     controller: BankersRepositoryDep,
@@ -55,8 +55,8 @@ async def list_bankers(
     '/{banker_id}',
     response_model=BankerOutSchema,
     status_code=status.HTTP_200_OK,
-    summary='Obter banco',
-    description='Obtém um banco por id.',
+    summary='Get banker',
+    description='Get a banker by id.',
 )
 async def get_banker(
     banker_id: UUID,
@@ -69,8 +69,8 @@ async def get_banker(
     '/{banker_id}',
     response_model=BankerOutSchema,
     status_code=status.HTTP_200_OK,
-    summary='Atualizar banco',
-    description='Atualiza o nome do banco.',
+    summary='Update banker',
+    description='Update the banker name.',
 )
 async def update_banker(
     banker_id: UUID,
@@ -84,8 +84,8 @@ async def update_banker(
 @router.delete(
     '/{banker_id}',
     status_code=status.HTTP_204_NO_CONTENT,
-    summary='Excluir banco',
-    description='Exclusão lógica.',
+    summary='Delete banker',
+    description='Logical deletion.',
 )
 async def delete_banker(
     banker_id: UUID,
