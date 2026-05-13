@@ -1,6 +1,11 @@
 from typing import List
 
-from src.domain.dtos.safra import BankerResponse, TokenResponse
+from src.domain.dtos.safra import (
+    BankerResponse,
+    MargemBpoDto,
+    MargemBpoOutputDto,
+    TokenResponse,
+)
 from src.domain.service.safra import SafraService
 
 
@@ -13,3 +18,6 @@ class SafraUseCase:
 
     async def get_bankers(self) -> List[BankerResponse]:
         return await self._safra_service.get_bankers()
+
+    async def get_margem_bpo(self, margem_bpo_dto: MargemBpoDto) -> MargemBpoOutputDto:
+        return await self._safra_service.get_margem_bpo(margem_bpo_dto)

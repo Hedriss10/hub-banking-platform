@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 from src.core.exceptions.custom import InfrastructureException
+from src.domain.dtos.safra import MargemBpoDto
 from src.infrastructure.external_apis.safra import SafraApi
 
 pytestmark = pytest.mark.unit
@@ -95,3 +96,34 @@ async def test_get_bankers_uses_bearer_from_token(safra_api: SafraApi) -> None:
     assert out.json() == []
     second_call = mock_req.await_args_list[1][0][0]
     assert second_call['headers']['Authorization'] == 'Bearer abc'
+
+
+@pytest.mark.asyncio
+async def test_get_margem_bpo_posts_consulta_margem(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    margem_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/margem'),
+        json={'cpf': '1', 'margem': 0.0},
+    )
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return margem_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    dto = MargemBpoDto(convenio=1, cpf=12345678901, idProduto=2, matricula='M')
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.get_margem_bpo(dto)
+
+    assert out.json()['margem'] == 0.0
+    second = mock_req.await_args_list[1][0][0]
+    assert second['method'] == 'POST'
+    assert second['url'] == '/api/v1/ConsultaMargem/Bpo'
+    assert second['headers']['Authorization'] == 'Bearer abc'
+    assert second['json'] == dto.model_dump()

@@ -83,6 +83,8 @@ class Settings(BaseSettings):
     }
     API_SAFRA_USERNAME: str = ''
     API_SAFRA_PASSWORD: str = ''
+    # Fallback adicional quando DEBUG=false (ex.: produção só com flag explícita)
+    API_SAFRA_MARGIN_RESPONSE_EMULATOR: bool = False
 
     @field_validator('BACKEND_CORS_ORIGINS', mode='before')
     def split_origins(cls, value: Any) -> Union[List[str], List[AnyHttpUrl]]:

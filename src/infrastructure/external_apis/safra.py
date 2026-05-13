@@ -2,12 +2,14 @@ import httpx
 
 from src.core.config.settings import get_settings
 from src.core.exceptions.custom import InfrastructureException
+from src.domain.dtos.safra import MargemBpoDto
 from src.infrastructure.external_apis.api_base_client import ApiBaseClient
 
 settings = get_settings()
 
 URL_BANKERS = '/api/v1/Banco'
 URL_TOKEN = '/api/v1/Token'
+URL_MARGEM_BPO = '/api/v1/ConsultaMargem/Bpo'
 
 
 class SafraApi(ApiBaseClient):
@@ -46,4 +48,14 @@ class SafraApi(ApiBaseClient):
             'method': 'GET',
             'url': URL_BANKERS,
             'headers': {'Authorization': f'Bearer {access_token}'},
+        })
+
+    async def get_margem_bpo(self, margem_bpo_dto: MargemBpoDto) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'POST',
+            'url': URL_MARGEM_BPO,
+            'headers': {'Authorization': f'Bearer {access_token}'},
+            'json': margem_bpo_dto.model_dump(),
         })
