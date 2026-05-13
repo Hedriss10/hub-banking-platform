@@ -3,6 +3,16 @@ from typing import Literal, TypedDict
 import httpx
 
 
+def _normalize_http_base_url(base_url: str) -> str:
+    """httpx exige scheme; hospedeiros frequentemente definem só o host."""
+    u = base_url.strip().rstrip('/')
+    if not u:
+        return u
+    if u.lower().startswith(('http://', 'https://')):
+        return u
+    return f'https://{u}'
+
+
 class HttpxRequest(TypedDict, total=False):
     url: str
     method: Literal['GET', 'POST', 'PUT', 'DELETE']
@@ -31,7 +41,7 @@ class ApiBaseClient:
         default_headers: dict[str, str] | None = None,
     ) -> None:
         self.name = name
-        self.base_url = base_url.rstrip('/')
+        self.base_url = _normalize_http_base_url(base_url)
         self.timeout = timeout
         self.default_headers = default_headers or {}
         self.errors = DefaultHttpClientErrorMessages(name)

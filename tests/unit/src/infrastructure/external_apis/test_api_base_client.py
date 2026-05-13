@@ -5,7 +5,6 @@ import httpx
 import pytest
 from src.infrastructure.external_apis.api_base_client import (
     ApiBaseClient,
-    DefaultHttpClientErrorMessages,
 )
 
 pytestmark = pytest.mark.unit
@@ -125,9 +124,17 @@ async def test_request_unknown_exception(api_client: ApiBaseClient) -> None:
     assert 'Unknown error when calling X' in str(exc_info.value)
 
 
-def test_default_http_client_error_messages() -> None:
-    m = DefaultHttpClientErrorMessages('Svc')
-    assert 'Svc' in m.timeout
-    assert 'Svc' in m.connection
-    assert 'Svc' in m.http
-    assert 'Svc' in m.unknown
+def test_normalize_base_url_via_client() -> None:
+    assert (
+        ApiBaseClient(name='T', base_url='api.exemplo.br').base_url
+        == 'https://api.exemplo.br'
+    )
+    assert (
+        ApiBaseClient(name='T', base_url='  https://api.exemplo.br/').base_url
+        == 'https://api.exemplo.br'
+    )
+    assert (
+        ApiBaseClient(name='T', base_url='http://localhost:8080/').base_url
+        == 'http://localhost:8080'
+    )
+    assert ApiBaseClient(name='T', base_url='   ').base_url == ''
