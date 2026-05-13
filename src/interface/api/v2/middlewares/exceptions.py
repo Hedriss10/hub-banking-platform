@@ -1,5 +1,7 @@
+import json
 from typing import Union
 
+import httpx
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -32,6 +34,61 @@ def sanitize_for_json(obj: object) -> object:
 _sanitize_for_json = sanitize_for_json
 
 
+def _upstream_http_error_response_content(
+    resp: httpx.Response,
+) -> tuple[int, dict[str, object]]:
+    """
+    Monta corpo e status HTTP de resposta quando um serviço externo retorna erro.
+    Tenta extrair mensagem amigável (ex.: campo `mensagem` da API Safra).
+    """
+    text = (resp.text or '')[:2000]
+    parsed: object | None = None
+    bank_message: str | None = None
+
+    if text.strip():
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            parsed = None
+
+    if isinstance(parsed, dict):
+        for key in ('mensagem', 'message', 'detail', 'erro'):
+            val = parsed.get(key)
+            if isinstance(val, str) and val.strip():
+                bank_message = val.strip()
+                break
+
+    if bank_message:
+        message = bank_message
+    else:
+        message = (
+            'Chamada HTTP a serviço externo falhou. '
+            'Veja upstream_status e upstream_body (resposta da API remota).'
+        )
+
+    upstream_status = resp.status_code
+    if upstream_status in (
+        status.HTTP_400_BAD_REQUEST,
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+    ):
+        client_status = status.HTTP_400_BAD_REQUEST
+    else:
+        client_status = status.HTTP_502_BAD_GATEWAY
+
+    body: dict[str, object] = {
+        'code': 'UPSTREAM_HTTP_ERROR',
+        'message': message,
+        'upstream_status': upstream_status,
+        'upstream_body': text,
+    }
+    if isinstance(parsed, (dict, list)):
+        body['upstream_json'] = sanitize_for_json(parsed)
+    if bank_message:
+        body['upstream_message'] = bank_message
+
+    return client_status, body
+
+
 async def request_validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
@@ -49,6 +106,12 @@ async def custom_exception_handler(
     request: Request,
     exc: Union[DomainException, MultipleException, InfrastructureException, Exception],
 ) -> JSONResponse:
+    if isinstance(exc, httpx.HTTPStatusError):
+        client_status, content = _upstream_http_error_response_content(exc.response)
+        return JSONResponse(
+            status_code=client_status,
+            content=sanitize_for_json(content),
+        )
     if isinstance(exc, MultipleException):
         status_code = getattr(exc, 'status_code', status.HTTP_400_BAD_REQUEST)
         errors = []

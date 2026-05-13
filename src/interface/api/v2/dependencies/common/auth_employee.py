@@ -17,13 +17,21 @@ async def get_current_employee_id(
     try:
         payload = decode_access_token(credentials.credentials)
     except jwt.ExpiredSignatureError as e:
-        raise InvalidOrExpiredTokenException('O token de acesso expirou') from e
+        raise InvalidOrExpiredTokenException(
+            'Access token expired. Call POST /api/v2/login and send the access_token '
+            'in the Authorization: Bearer header.'
+        ) from e
     except jwt.PyJWTError as e:
-        raise InvalidOrExpiredTokenException('Token de acesso inválido') from e
+        raise InvalidOrExpiredTokenException(
+            'Invalid access token. Use the access_token returned by POST /api/v2/login '
+            'in the Authorization: Bearer header.'
+        ) from e
 
     sub = payload.get('id')
     if not sub:
-        raise InvalidOrExpiredTokenException('Token sem identificador de funcionário')
+        raise InvalidOrExpiredTokenException(
+            'Token missing employee identifier. Log in again via POST /api/v2/login.'
+        )
     return UUID(str(sub))
 
 
