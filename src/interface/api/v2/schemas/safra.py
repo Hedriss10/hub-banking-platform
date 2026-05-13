@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -37,10 +39,10 @@ class MargemBpoOutSchema(BaseModel):
     nome: str
     secretaria: str
     tipoServidor: str
-    cargo: str
-    regimeJuridico: str
-    dataAdmissao: str
-    uf: str
-    renda: float
-    mensagemErro: str
+    cargo: Optional[str] = None
+    regimeJuridico: Optional[str] = None
+    dataAdmissao: Optional[str] = None
+    uf: Optional[str] = None
+    renda: Optional[float] = None
+    mensagemErro: Optional[str] = None
     dataHoraConsulta: str

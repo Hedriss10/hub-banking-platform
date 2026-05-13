@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -30,7 +32,10 @@ class MargemBpoDto(BaseModel):
 
 
 class MargemBpoOutputDto(BaseModel):
-    """Resposta da consulta de margem BPO (API Safra)."""
+    """Resposta da consulta de margem BPO (API Safra).
+
+    A Safra pode omitir ou enviar null em vários campos conforme o servidor.
+    """
 
     model_config = ConfigDict(extra='ignore')
 
@@ -41,10 +46,10 @@ class MargemBpoOutputDto(BaseModel):
     nome: str
     secretaria: str
     tipoServidor: str
-    cargo: str
-    regimeJuridico: str
-    dataAdmissao: str
-    uf: str
-    renda: float
-    mensagemErro: str
+    cargo: Optional[str] = None
+    regimeJuridico: Optional[str] = None
+    dataAdmissao: Optional[str] = None
+    uf: Optional[str] = None
+    renda: Optional[float] = None
+    mensagemErro: Optional[str] = None
     dataHoraConsulta: str
