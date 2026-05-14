@@ -31,8 +31,10 @@ router = APIRouter(
     '/token',
     response_model=TokenOutSchema,
     status_code=status.HTTP_200_OK,
-    summary='Obter token Safra',
-    description=('Requires header Authorization: Bearer with the access_token'),
+    summary='Get Safra token',
+    description=(
+        'Requires Authorization: Bearer header with the employee access token.'
+    ),
 )
 async def post_safra_token(
     controller: SafraControllerDep,
@@ -47,8 +49,8 @@ async def post_safra_token(
     status_code=status.HTTP_200_OK,
     summary='List banks (Safra)',
     description=(
-        'Requires Authorization: Bearer (JWT of the employee). '
-        'The Safra API token is obtained on the server using'
+        'Requires Authorization: Bearer (employee JWT). '
+        'The Safra API token is obtained on the server when this endpoint runs.'
     ),
 )
 async def list_safra_banks(
@@ -64,10 +66,10 @@ async def list_safra_banks(
     status_code=status.HTTP_200_OK,
     summary='Consult margin (BPO)',
     description=(
-        'Margin consultation via Safra ConsultaMargem/Bpo. '
+        'Margin enquiry via Safra ConsultaMargem/Bpo. '
         'Requires Authorization: Bearer (employee JWT); '
         'Safra token is obtained server-side. '
-        'Envie `cpf` como string para preservar zeros à esquerda.'
+        'Send `cpf` as a string to preserve leading zeros.'
     ),
 )
 async def post_safra_margin_bpo(
@@ -82,10 +84,10 @@ async def post_safra_margin_bpo(
     '/batch/search/job-ids',
     response_model=SafraBatchJobIdsOutSchema,
     status_code=status.HTTP_200_OK,
-    summary='Lista batch_job_id distintos (Postgres)',
+    summary='List distinct batch_job_id (Postgres)',
     description=(
-        'Retorna todos os identifiers de jobs com ao menos uma linha persistida '
-        'em safra_batch_search (não inclui registros marcados como deletados).'
+        'Returns identifiers for jobs that have at least one row persisted '
+        'in `safra_batch_search` (excludes rows marked deleted).'
     ),
 )
 async def get_safra_batch_search_job_ids(
@@ -99,19 +101,19 @@ async def get_safra_batch_search_job_ids(
     '/batch/search/upload',
     response_model=SafraBatchUploadOutSchema,
     status_code=status.HTTP_202_ACCEPTED,
-    summary='Upload CSV — batch consulta margem Safra',
+    summary='Upload CSV — Safra batch margin enquiry',
     description=(
-        'Recebe CSV UTF-8 com cabeçalho (convenio, idProduto, cpf, matricula; '
-        'telefones opcionais phone_one … phone_five). '
-        'O processamento roda em segundo plano; use GET /batch/search/{job_id}/status. '
-        'Requer REDIS_URL configurado.'
+        'Accepts a UTF-8 CSV with headers (convenio, idProduto, cpf, matricula; '
+        'optional phones phone_one … phone_five). '
+        'Processing runs in the background; poll GET /batch/search/{job_id}/status. '
+        'Requires REDIS_URL to be configured.'
     ),
 )
 async def post_safra_batch_search_upload(
     background_tasks: BackgroundTasks,
     controller: SafraControllerDep,
     _employee_id: CurrentEmployeeIdDep,
-    file: UploadFile = File(..., description='Arquivo CSV UTF-8'),
+    file: UploadFile = File(..., description='UTF-8 CSV file'),
 ) -> SafraBatchUploadOutSchema:
     return await controller.upload_batch_search_csv(file, background_tasks)
 
@@ -120,10 +122,8 @@ async def post_safra_batch_search_upload(
     '/batch/search/{job_id}/status',
     response_model=SafraBatchJobStatusOutSchema,
     status_code=status.HTTP_200_OK,
-    summary='Status do job de batch Safra',
-    description=(
-        'Polling pelo frontend; estado fica em Redis até expirar (TTL configurável).'
-    ),
+    summary='Safra batch job status',
+    description=('Frontend polling; job state lives in Redis until it expires.'),
 )
 async def get_safra_batch_search_status(
     job_id: UUID,
@@ -136,10 +136,10 @@ async def get_safra_batch_search_status(
 @router.get(
     '/batch/search/{batch_job_id}/export',
     status_code=status.HTTP_200_OK,
-    summary='Export CSV dos resultados do lote',
+    summary='Export batch results as CSV',
     description=(
-        'CSV UTF-8 (BOM) com delimitador `;`, mesmos resultados gravados pelo worker '
-        '(batch_job_id igual ao job_id retornado no upload).'
+        'UTF-8 CSV (with BOM), delimiter `;`, same payload persisted by the worker '
+        '`batch_job_id` matches the upload response `job_id`.'
     ),
 )
 async def get_safra_batch_search_export(
@@ -159,11 +159,11 @@ async def get_safra_batch_search_export(
 @router.delete(
     '/batch/search/{batch_job_id}',
     status_code=status.HTTP_204_NO_CONTENT,
-    summary='Remove fisicamente o lote (Postgres)',
+    summary='Hard-delete batch rows (Postgres)',
     description=(
-        'Executa `DELETE` nas linhas de `safra_batch_search` com o `batch_job_id` '
-        'informado (exclusão permanente — não usa `is_deleted`). '
-        'Não altera dados no Redis; **404** se não houver linhas para esse UUID.'
+        'Runs SQL `DELETE` on `safra_batch_search` for the given `batch_job_id` '
+        '(permanent removal — not soft delete via `is_deleted`). '
+        'Does not change Redis job state; **404** when no rows exist for this UUID.'
     ),
 )
 async def delete_safra_batch_search_job(
