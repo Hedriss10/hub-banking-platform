@@ -59,7 +59,7 @@ async def test_consult_margem_bpo_returns_schema() -> None:
     controller = SafraController(uc)
     body = MargemBpoInSchema(
         convenio=1,
-        cpf=12345678901,
+        cpf='12345678901',
         idProduto=2,
         matricula='M1',
     )

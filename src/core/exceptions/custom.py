@@ -52,3 +52,11 @@ class NotFoundException(InfrastructureException):
 
     status_code: int = HTTPStatus.NOT_FOUND.value
     code: str = 'NOT_FOUND_ERROR'
+
+
+class SafraBatchCsvValidationError(Exception):
+    """Erros agregados ao validar linhas do CSV de batch Safra."""
+
+    def __init__(self, messages: list[str]) -> None:
+        self.messages = messages
+        super().__init__(', '.join(messages))

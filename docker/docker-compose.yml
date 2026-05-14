@@ -1,6 +1,3 @@
-# PostgreSQL + FastAPI. Proxy Daycoval (nginx) fica no HOST da VPS — ver deploy/README.md
-# e deploy/nginx-daycoval-sandbox.conf.
-
 services:
 
   hub-banking-platform:
@@ -37,11 +34,14 @@ services:
     depends_on:
       hub-banking-platform:
         condition: service_healthy
+      redis-hub-banking-platform:
+        condition: service_started
     ports:
       - "${API_PORT:-8000}:${API_PORT:-8000}"
     environment:
       # Host fixo = nome do serviço PostgreSQL na rede Docker (não usar localhost!)
       SQLALCHEMY_DATABASE_URI: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@hub-banking-platform:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-hub-banking-platform}
+      REDIS_URL: redis://redis-hub-banking-platform:6379/0
       DEBUG: "${DEBUG:-true}"
       ALLOWED_HOSTS: "${ALLOWED_HOSTS:-*}"
     volumes:
@@ -50,6 +50,15 @@ services:
     networks:
       - hub-banking-platform-net
     command: uvicorn src.main:app --host 0.0.0.0 --port ${API_PORT:-8000}
+
+  redis-hub-banking-platform:
+    image: redis:7-alpine
+    container_name: redis_hub_banking_platform
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - hub-banking-platform-net
 
 
 volumes:
