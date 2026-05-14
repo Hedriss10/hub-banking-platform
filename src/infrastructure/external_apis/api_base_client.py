@@ -2,6 +2,11 @@ from typing import Literal, TypedDict
 
 import httpx
 
+from src.core.config.logger import logger
+from src.core.config.settings import get_settings
+
+settings = get_settings()
+
 
 def _normalize_http_base_url(base_url: str) -> str:
     """httpx exige scheme; hospedeiros frequentemente definem só o host."""
@@ -10,6 +15,8 @@ def _normalize_http_base_url(base_url: str) -> str:
         return u
     if u.lower().startswith(('http://', 'https://')):
         return u
+    logger.info(f'Normalizing base URL: {u}')
+    logger.info(f'Settings API_BASE_URL: {settings.API_SAFRA_BASE_URL}')
     return f'https://{u}'
 
 

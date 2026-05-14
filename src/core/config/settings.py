@@ -75,7 +75,9 @@ class Settings(BaseSettings):
     CONTABO_SECRET_ACCESS_KEY: str = ''
 
     # Safra
-    API_SAFRA_BASE_URL: str = ''
+    API_SAFRA_BASE_URL: str = (
+        'https://api.safrafinanceira.com.br/apl-api-correspondente'
+    )
     API_SAFRA_TIMEOUT: float = 10.0
     API_SAFRA_DEFAULT_HEADERS: dict[str, str] = {
         'Content-Type': 'application/json',
