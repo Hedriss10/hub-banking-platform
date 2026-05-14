@@ -11,8 +11,9 @@ pytestmark = pytest.mark.unit
 @pytest.mark.asyncio
 async def test_get_token_returns_schema() -> None:
     uc = AsyncMock()
+    batch_uc = AsyncMock()
     uc.get_token = AsyncMock(return_value=TokenResponse.model_validate({'token': 'x'}))
-    controller = SafraController(uc)
+    controller = SafraController(uc, batch_uc)
     out = await controller.get_token()
     assert out.token == 'x'
     uc.get_token.assert_awaited_once()
@@ -29,8 +30,9 @@ async def test_list_banks_returns_schemas() -> None:
         )
     ]
     uc = AsyncMock()
+    batch_uc = AsyncMock()
     uc.get_bankers = AsyncMock(return_value=bankers)
-    controller = SafraController(uc)
+    controller = SafraController(uc, batch_uc)
     out = await controller.list_banks()
     assert len(out) == 1
     assert out[0].nomeBanco == 'N'
@@ -55,8 +57,9 @@ async def test_consult_margem_bpo_returns_schema() -> None:
         dataHoraConsulta='2026-01-01T00:00:00',
     )
     uc = AsyncMock()
+    batch_uc = AsyncMock()
     uc.get_margem_bpo = AsyncMock(return_value=dto_out)
-    controller = SafraController(uc)
+    controller = SafraController(uc, batch_uc)
     body = MargemBpoInSchema(
         convenio=1,
         cpf='12345678901',

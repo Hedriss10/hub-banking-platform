@@ -3,6 +3,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import AsyncClient
 from src.domain.dtos.safra import BankerResponse, MargemBpoOutputDto, TokenResponse
+from src.domain.dtos.safra_batch_search import SafraBatchSearchExportRowDTO
+from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
 from starlette import status
 
 pytestmark = pytest.mark.unit
@@ -12,6 +14,9 @@ _SAFRA_BANKS = '/api/v2/safra/banks'
 _SAFRA_MARGIN_BPO = '/api/v2/safra/margin/bpo'
 _SAFRA_BATCH_UPLOAD = '/api/v2/safra/batch/search/upload'
 _SAFRA_BATCH_STATUS_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/status'
+_SAFRA_BATCH_JOB_IDS = '/api/v2/safra/batch/search/job-ids'
+_SAFRA_BATCH_EXPORT_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/export'
+_SAFRA_BATCH_DELETE_TEMPLATE = '/api/v2/safra/batch/search/{job_id}'
 
 
 _MARGEM_OUT = MargemBpoOutputDto(
@@ -209,3 +214,111 @@ async def test_get_safra_batch_status_job_ausente(
     url = _SAFRA_BATCH_STATUS_TEMPLATE.format(job_id=generate_uuid)
     response = await async_safra_client.get(url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_get_safra_batch_job_ids(
+    async_safra_client: AsyncClient,
+    mock_safra_batch_search_use_case: AsyncMock,
+    generate_uuid,
+) -> None:
+    jid = generate_uuid
+    mock_safra_batch_search_use_case.list_distinct_batch_job_ids = AsyncMock(
+        return_value=[jid],
+    )
+    response = await async_safra_client.get(_SAFRA_BATCH_JOB_IDS)
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()['batch_job_ids'] == [str(jid)]
+    mock_safra_batch_search_use_case.list_distinct_batch_job_ids.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_safra_batch_export_csv(
+    async_safra_client: AsyncClient,
+    mock_safra_batch_search_use_case: AsyncMock,
+    generate_uuid,
+) -> None:
+    jid = generate_uuid
+    row = SafraBatchSearchExportRowDTO(
+        batch_job_id=jid,
+        cpf='01437872506',
+        margem=2.0,
+        lotacao='L',
+        autorizada=False,
+        nome='N',
+        secretaria='S',
+        tipoServidor='T',
+        cargo=None,
+        regimeJuridico=None,
+        dataAdmissao=None,
+        uf='RJ',
+        renda=None,
+        phone_one=None,
+        phone_two=None,
+        phone_three=None,
+        phone_four=None,
+        phone_five=None,
+    )
+    mock_safra_batch_search_use_case.list_rows_for_export = AsyncMock(
+        return_value=[row],
+    )
+    url = _SAFRA_BATCH_EXPORT_TEMPLATE.format(job_id=jid)
+    response = await async_safra_client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    assert 'text/csv' in response.headers.get('content-type', '')
+    assert 'attachment' in response.headers.get('content-disposition', '').lower()
+    text = response.content.decode('utf-8-sig')
+    assert text.split('\r\n')[0].startswith('batch_job_id')
+    assert ';false;' in text
+    mock_safra_batch_search_use_case.list_rows_for_export.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_safra_batch_export_not_found(
+    async_safra_client: AsyncClient,
+    mock_safra_batch_search_use_case: AsyncMock,
+    generate_uuid,
+) -> None:
+    mock_safra_batch_search_use_case.list_rows_for_export = AsyncMock(
+        side_effect=SafraBatchSearchNotFoundException(),
+    )
+    url = _SAFRA_BATCH_EXPORT_TEMPLATE.format(job_id=generate_uuid)
+    response = await async_safra_client.get(url)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()['code'] == 'SAFRA_BATCH_SEARCH_NOT_FOUND'
+
+
+@pytest.mark.asyncio
+async def test_delete_safra_batch_job_records_success(
+    async_safra_client: AsyncClient,
+    mock_safra_batch_search_use_case: AsyncMock,
+    generate_uuid,
+) -> None:
+    jid = generate_uuid
+    mock_safra_batch_search_use_case.delete_persisted_batch_job_rows = AsyncMock(
+        return_value=None,
+    )
+    url = _SAFRA_BATCH_DELETE_TEMPLATE.format(job_id=jid)
+    response = await async_safra_client.delete(url)
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.content == b''
+    mock_safra_batch_search_use_case.delete_persisted_batch_job_rows.assert_awaited_once_with(
+        jid,
+    )
+
+
+@pytest.mark.asyncio
+async def test_delete_safra_batch_job_not_found(
+    async_safra_client: AsyncClient,
+    mock_safra_batch_search_use_case: AsyncMock,
+    generate_uuid,
+) -> None:
+    mock_safra_batch_search_use_case.delete_persisted_batch_job_rows = AsyncMock(
+        side_effect=SafraBatchSearchNotFoundException(
+            message='Nenhuma linha encontrada para esse lote.',
+        ),
+    )
+    url = _SAFRA_BATCH_DELETE_TEMPLATE.format(job_id=generate_uuid)
+    response = await async_safra_client.delete(url)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()['code'] == 'SAFRA_BATCH_SEARCH_NOT_FOUND'

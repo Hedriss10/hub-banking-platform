@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -64,6 +64,12 @@ class SafraBatchUploadOutSchema(BaseModel):
     job_id: UUID
     status: str
     total_rows: int
+
+
+class SafraBatchJobIdsOutSchema(BaseModel):
+    """Lista de batch_job_id distintos com dados persistidos no Postgres."""
+
+    batch_job_ids: List[UUID]
 
 
 class SafraBatchJobStatusOutSchema(BaseModel):

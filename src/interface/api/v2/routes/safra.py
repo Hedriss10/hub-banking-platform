@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, Response, UploadFile, status
 
 from src.interface.api.v2.dependencies.common.auth_employee import CurrentEmployeeIdDep
 from src.interface.api.v2.dependencies.safra import SafraControllerDep
@@ -9,6 +9,7 @@ from src.interface.api.v2.schemas.safra import (
     BankerOutSchema,
     MargemBpoInSchema,
     MargemBpoOutSchema,
+    SafraBatchJobIdsOutSchema,
     SafraBatchJobStatusOutSchema,
     SafraBatchUploadOutSchema,
     TokenOutSchema,
@@ -77,6 +78,23 @@ async def post_safra_margin_bpo(
     return await controller.consult_margem_bpo(body)
 
 
+@router.get(
+    '/batch/search/job-ids',
+    response_model=SafraBatchJobIdsOutSchema,
+    status_code=status.HTTP_200_OK,
+    summary='Lista batch_job_id distintos (Postgres)',
+    description=(
+        'Retorna todos os identifiers de jobs com ao menos uma linha persistida '
+        'em safra_batch_search (não inclui registros marcados como deletados).'
+    ),
+)
+async def get_safra_batch_search_job_ids(
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> SafraBatchJobIdsOutSchema:
+    return await controller.list_persisted_batch_job_ids()
+
+
 @router.post(
     '/batch/search/upload',
     response_model=SafraBatchUploadOutSchema,
@@ -113,3 +131,45 @@ async def get_safra_batch_search_status(
     _employee_id: CurrentEmployeeIdDep,
 ) -> SafraBatchJobStatusOutSchema:
     return await controller.get_batch_job_status(job_id)
+
+
+@router.get(
+    '/batch/search/{batch_job_id}/export',
+    status_code=status.HTTP_200_OK,
+    summary='Export CSV dos resultados do lote',
+    description=(
+        'CSV UTF-8 (BOM) com delimitador `;`, mesmos resultados gravados pelo worker '
+        '(batch_job_id igual ao job_id retornado no upload).'
+    ),
+)
+async def get_safra_batch_search_export(
+    batch_job_id: UUID,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> Response:
+    payload = await controller.export_batch_job_results_csv(batch_job_id)
+    disposition = f'attachment; filename="safra-batch-{batch_job_id}.csv"'
+    return Response(
+        content=payload,
+        media_type='text/csv; charset=utf-8',
+        headers={'Content-Disposition': disposition},
+    )
+
+
+@router.delete(
+    '/batch/search/{batch_job_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary='Remove fisicamente o lote (Postgres)',
+    description=(
+        'Executa `DELETE` nas linhas de `safra_batch_search` com o `batch_job_id` '
+        'informado (exclusão permanente — não usa `is_deleted`). '
+        'Não altera dados no Redis; **404** se não houver linhas para esse UUID.'
+    ),
+)
+async def delete_safra_batch_search_job(
+    batch_job_id: UUID,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> Response:
+    await controller.delete_batch_job_search_records(batch_job_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

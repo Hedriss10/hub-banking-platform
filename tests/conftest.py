@@ -6,11 +6,21 @@ from uuid import UUID
 
 import pytest
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
+from src.core.exceptions.custom import (
+    DomainException,
+    InfrastructureException,
+    MultipleException,
+)
 from src.interface.api.v2 import v2_router
 from src.interface.api.v2.controller.employee import EmployeeController
 from src.interface.api.v2.dependencies.employee import get_employee_controller
+from src.interface.api.v2.middlewares.exceptions import (
+    custom_exception_handler,
+    request_validation_exception_handler,
+)
 
 from tests.async_http import async_client_for_app
 
@@ -81,6 +91,13 @@ def v2_test_app() -> Generator[FastAPI, None, None]:
     Inclui todos os módulos em `src/interface/api/v2/routes/`.
     """
     app = FastAPI()
+    app.add_exception_handler(DomainException, custom_exception_handler)
+    app.add_exception_handler(InfrastructureException, custom_exception_handler)
+    app.add_exception_handler(MultipleException, custom_exception_handler)
+    app.add_exception_handler(
+        RequestValidationError,
+        request_validation_exception_handler,
+    )
     app.include_router(v2_router, prefix='/api')
     yield app
     app.dependency_overrides.clear()
@@ -302,9 +319,15 @@ def mock_safra_use_case() -> AsyncMock:
 
 
 @pytest.fixture
+def mock_safra_batch_search_use_case() -> AsyncMock:
+    return AsyncMock()
+
+
+@pytest.fixture
 async def async_safra_client(
     v2_test_app: FastAPI,
     mock_safra_use_case: AsyncMock,
+    mock_safra_batch_search_use_case: AsyncMock,
 ) -> AsyncGenerator[AsyncClient, None]:
     from src.interface.api.v2.controller.safra import SafraController
     from src.interface.api.v2.dependencies.common.auth_employee import (
@@ -312,7 +335,10 @@ async def async_safra_client(
     )
     from src.interface.api.v2.dependencies.safra import get_safra_controller
 
-    controller = SafraController(mock_safra_use_case)
+    controller = SafraController(
+        mock_safra_use_case,
+        mock_safra_batch_search_use_case,
+    )
 
     async def _override_controller() -> SafraController:
         return controller
