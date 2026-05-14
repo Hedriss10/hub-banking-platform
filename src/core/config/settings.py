@@ -88,6 +88,10 @@ class Settings(BaseSettings):
     # Fallback adicional quando DEBUG=false (ex.: produção só com flag explícita)
     API_SAFRA_MARGIN_RESPONSE_EMULATOR: bool = False
 
+    # Redis (fila/status de jobs, ex.: batch Safra entre workers uvicorn)
+    REDIS_URL: Optional[str] = None
+    SAFRA_BATCH_JOB_TTL_SECONDS: int = 86_400
+
     @field_validator('BACKEND_CORS_ORIGINS', mode='before')
     def split_origins(cls, value: Any) -> Union[List[str], List[AnyHttpUrl]]:
         """

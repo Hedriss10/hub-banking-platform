@@ -1,11 +1,21 @@
 from typing import List
+from uuid import UUID, uuid4
 
+from fastapi import BackgroundTasks, HTTPException, UploadFile, status
+
+from src.core.config.settings import get_settings
+from src.core.exceptions.custom import SafraBatchCsvValidationError
 from src.domain.dtos.safra import BankerResponse, MargemBpoDto, TokenResponse
 from src.domain.use_case.safra import SafraUseCase
+from src.infrastructure.redis.safra_batch_job_store import job_get, job_save
+from src.infrastructure.workers.processing_batch_safra import run_safra_batch_job
+from src.infrastructure.workers.safra_batch_csv import parse_safra_batch_csv
 from src.interface.api.v2.schemas.safra import (
     BankerOutSchema,
     MargemBpoInSchema,
     MargemBpoOutSchema,
+    SafraBatchJobStatusOutSchema,
+    SafraBatchUploadOutSchema,
     TokenOutSchema,
 )
 
@@ -34,3 +44,71 @@ class SafraController:
         dto = MargemBpoDto.model_validate(body.model_dump())
         out = await self._safra_use_case.get_margem_bpo(dto)
         return MargemBpoOutSchema.model_validate(out.model_dump(mode='json'))
+
+    async def upload_batch_search_csv(
+        self,
+        file: UploadFile,
+        background_tasks: BackgroundTasks,
+    ) -> SafraBatchUploadOutSchema:
+        settings = get_settings()
+        if not settings.REDIS_URL:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    'REDIS_URL não configurado — batch em segundo plano indisponível.'
+                ),
+            )
+
+        content = await file.read()
+        try:
+            rows = parse_safra_batch_csv(content)
+        except SafraBatchCsvValidationError as exc:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                detail={'messages': exc.messages},
+            ) from exc
+
+        job_id = uuid4()
+        await job_save(
+            job_id,
+            {
+                'status': 'queued',
+                'total_rows': len(rows),
+                'processed_rows': 0,
+                'failed_rows': 0,
+                'detail': None,
+            },
+        )
+        payload = [row.model_dump(mode='json') for row in rows]
+        background_tasks.add_task(run_safra_batch_job, job_id, payload)
+        return SafraBatchUploadOutSchema(
+            job_id=job_id,
+            status='queued',
+            total_rows=len(rows),
+        )
+
+    async def get_batch_job_status(self, job_id: UUID) -> SafraBatchJobStatusOutSchema:
+        settings = get_settings()
+        if not settings.REDIS_URL:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    'REDIS_URL não configurado — batch em segundo plano indisponível.'
+                ),
+            )
+
+        state = await job_get(job_id)
+        if state is None:
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND,
+                detail='Job não encontrado',
+            )
+
+        return SafraBatchJobStatusOutSchema(
+            job_id=job_id,
+            status=str(state['status']),
+            total_rows=int(state['total_rows']),
+            processed_rows=int(state['processed_rows']),
+            failed_rows=int(state['failed_rows']),
+            detail=state.get('detail'),
+        )

@@ -117,7 +117,7 @@ async def test_get_margem_bpo_posts_consulta_margem(safra_api: SafraApi) -> None
         return margem_resp
 
     mock_req = AsyncMock(side_effect=_req)
-    dto = MargemBpoDto(convenio=1, cpf=12345678901, idProduto=2, matricula='M')
+    dto = MargemBpoDto(convenio=1, cpf='12345678901', idProduto=2, matricula='M')
     with patch.object(safra_api, 'request', mock_req):
         out = await safra_api.get_margem_bpo(dto)
 

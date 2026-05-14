@@ -54,7 +54,7 @@ async def test_get_bankers_parses_rows() -> None:
 async def test_get_margem_bpo_maps_response_json() -> None:
     dto_in = MargemBpoDto(
         convenio=1,
-        cpf=12345678901,
+        cpf='12345678901',
         idProduto=2,
         matricula='M1',
     )
@@ -91,7 +91,7 @@ async def test_get_margem_bpo_demo_emulator_short_circuits_upstream(
 ) -> None:
     dto_in = MargemBpoDto(
         convenio=emulator_safra_demo.DEMO_MARGIN_CONVENIO,
-        cpf=int(emulator_safra_demo.DEMO_MARGIN_SUCCESS_CPF),
+        cpf=emulator_safra_demo.DEMO_MARGIN_SUCCESS_CPF,
         idProduto=emulator_safra_demo.DEMO_MARGIN_ID_PRODUTO,
         matricula=emulator_safra_demo.DEMO_MARGIN_MATRICULA,
     )
@@ -117,7 +117,7 @@ async def test_get_margem_bpo_debug_on_triggers_demo_without_emulator_flag(
 ) -> None:
     dto_in = MargemBpoDto(
         convenio=emulator_safra_demo.DEMO_MARGIN_CONVENIO,
-        cpf=int(emulator_safra_demo.DEMO_MARGIN_SUCCESS_CPF),
+        cpf=emulator_safra_demo.DEMO_MARGIN_SUCCESS_CPF,
         idProduto=emulator_safra_demo.DEMO_MARGIN_ID_PRODUTO,
         matricula=emulator_safra_demo.DEMO_MARGIN_MATRICULA,
     )
@@ -146,7 +146,7 @@ async def test_get_margem_bpo_demo_fingerprint_debug_emulator_off_calls_upstream
 ) -> None:
     dto_in = MargemBpoDto(
         convenio=emulator_safra_demo.DEMO_MARGIN_CONVENIO,
-        cpf=int(emulator_safra_demo.DEMO_MARGIN_SUCCESS_CPF),
+        cpf=emulator_safra_demo.DEMO_MARGIN_SUCCESS_CPF,
         idProduto=emulator_safra_demo.DEMO_MARGIN_ID_PRODUTO,
         matricula=emulator_safra_demo.DEMO_MARGIN_MATRICULA,
     )
@@ -197,7 +197,7 @@ async def test_get_margem_bpo_emulator_on_non_matching_payload_calls_upstream(
     )
     dto_in = MargemBpoDto(
         convenio=1,
-        cpf=38585766034,
+        cpf='38585766034',
         idProduto=1,
         matricula='other',
     )

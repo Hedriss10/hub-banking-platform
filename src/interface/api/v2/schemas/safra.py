@@ -1,6 +1,10 @@
 from typing import Optional
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from src.domain.validators.cpf_input import CpfSafraStr
+from src.interface.api.v2.schemas.enum.safra_bpo_prodcuts import SafraBpoProducts
 
 
 class TokenOutSchema(BaseModel):
@@ -18,11 +22,17 @@ class BankerOutSchema(BaseModel):
 
 class MargemBpoInSchema(BaseModel):
     convenio: int
-    cpf: int
+    cpf: CpfSafraStr
     idProduto: int
     matricula: str
 
     model_config = ConfigDict(str_strip_whitespace=True)
+
+    @field_validator('idProduto')
+    @classmethod
+    def validate_id_produto(cls, value: int) -> int:
+        SafraBpoProducts(value)
+        return value
 
 
 class MargemBpoOutSchema(BaseModel):
@@ -46,3 +56,22 @@ class MargemBpoOutSchema(BaseModel):
     renda: Optional[float] = None
     mensagemErro: Optional[str] = None
     dataHoraConsulta: str
+
+
+class SafraBatchUploadOutSchema(BaseModel):
+    """Resposta ao enfileirar processamento do CSV."""
+
+    job_id: UUID
+    status: str
+    total_rows: int
+
+
+class SafraBatchJobStatusOutSchema(BaseModel):
+    """Status do job em Redis para polling pelo frontend."""
+
+    job_id: UUID
+    status: str
+    total_rows: int
+    processed_rows: int
+    failed_rows: int
+    detail: Optional[str] = None

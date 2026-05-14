@@ -46,7 +46,7 @@ async def test_get_bankers() -> None:
 async def test_get_margem_bpo() -> None:
     dto_in = MargemBpoDto(
         convenio=1,
-        cpf=12345678901,
+        cpf='12345678901',
         idProduto=2,
         matricula='M1',
     )
