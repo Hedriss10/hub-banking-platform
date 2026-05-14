@@ -47,9 +47,37 @@ def _row_dict(csv_row: dict[str | Any, str | Any]) -> dict[str, Any]:
     return mapped
 
 
+def _first_non_empty_line(text: str) -> str:
+    for line in text.splitlines():
+        s = line.strip()
+        if s:
+            return s
+    return ''
+
+
+def _guess_csv_delimiter(text: str) -> str:
+    """
+    Escolhe `;` ou `,` conforme o cabeçalho.
+
+    CSV europeu / Excel BR costuma usar ponto e vírgula.
+    """
+    first = _first_non_empty_line(text)
+    if not first:
+        return ','
+    semicolons = first.count(';')
+    commas = first.count(',')
+    if semicolons > commas:
+        return ';'
+    if commas > semicolons:
+        return ','
+    return ','
+
+
 def parse_safra_batch_csv(content: bytes) -> list[SafraBatchSearchDto]:
     """
     Lê CSV com cabeçalho (UTF-8 com BOM permitido).
+
+    Delimitador: vírgula (`,`) ou ponto e vírgula (`;`), inferido pela primeira linha.
 
     Colunas obrigatórias: convenio, idProduto (ou id_produto), cpf, matricula.
     Telefones opcionais: phone_one … phone_five (ou telefone_um … telefone_cinco).
@@ -59,7 +87,8 @@ def parse_safra_batch_csv(content: bytes) -> list[SafraBatchSearchDto]:
     except UnicodeDecodeError as exc:
         raise SafraBatchCsvValidationError(['CSV deve estar em UTF-8']) from exc
 
-    reader = csv.DictReader(io.StringIO(text))
+    delimiter = _guess_csv_delimiter(text)
+    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
     if not reader.fieldnames:
         raise SafraBatchCsvValidationError(['CSV sem cabeçalho'])
 

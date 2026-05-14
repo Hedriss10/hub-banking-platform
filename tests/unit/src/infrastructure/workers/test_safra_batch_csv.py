@@ -27,6 +27,21 @@ def test_parse_csv_headers_acentuados() -> None:
     assert rows[0].convenio == _CONVENIO_DEMO
 
 
+def test_parse_csv_separador_ponto_virgula_formato_excel() -> None:
+    """matricula;cpf;convenio;idProduto;phone_one — comum em Excel BR."""
+    raw = (
+        'matricula;cpf;convenio;idProduto;phone_one\n'
+        f'303052602500000;1437872506;{_CONVENIO_DEMO};1;6199324141\n'
+    )
+    rows = parse_safra_batch_csv(raw.encode('utf-8'))
+    assert len(rows) == 1
+    assert rows[0].matricula == '303052602500000'
+    assert rows[0].cpf == '01437872506'
+    assert rows[0].convenio == _CONVENIO_DEMO
+    assert rows[0].idProduto == 1
+    assert rows[0].phone_one == '6199324141'
+
+
 def test_parse_csv_utf8_invalido() -> None:
     with pytest.raises(SafraBatchCsvValidationError, match='UTF-8'):
         parse_safra_batch_csv(b'\xff\xfe')
