@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
 from pydantic import ValidationError
 
+from src.core.config.logger import logger
 from src.domain.dtos.safra import MargemBpoDto, MargemBpoOutputDto, SafraBatchSearchDto
 from src.infrastructure.database.models.safra_batch_search import SafraBatchSearchModel
 from src.infrastructure.database.session import get_session_factory
 from src.infrastructure.redis.safra_batch_job_store import job_get, job_save
 from src.infrastructure.repositories.safra_external import SafraExternalRepository
-from src.core.config.logger import logger
+
 
 def _parse_iso_datetime(value: str | None) -> datetime | None:
     if value is None:

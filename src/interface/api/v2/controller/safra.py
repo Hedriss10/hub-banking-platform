@@ -7,13 +7,18 @@ from src.core.config.settings import get_settings
 from src.core.exceptions.custom import SafraBatchCsvValidationError
 from src.domain.dtos.safra import BankerResponse, MargemBpoDto, TokenResponse
 from src.domain.use_case.safra import SafraUseCase
+from src.domain.use_case.safra_batch_search import SafraBatchSearchUseCase
 from src.infrastructure.redis.safra_batch_job_store import job_get, job_save
+from src.infrastructure.utils.safra_batch_export_csv import (
+    encode_safra_batch_search_export_csv,
+)
 from src.infrastructure.workers.processing_batch_safra import run_safra_batch_job
 from src.infrastructure.workers.safra_batch_csv import parse_safra_batch_csv
 from src.interface.api.v2.schemas.safra import (
     BankerOutSchema,
     MargemBpoInSchema,
     MargemBpoOutSchema,
+    SafraBatchJobIdsOutSchema,
     SafraBatchJobStatusOutSchema,
     SafraBatchUploadOutSchema,
     TokenOutSchema,
@@ -29,8 +34,13 @@ def _banker_to_schema(dto: BankerResponse) -> BankerOutSchema:
 
 
 class SafraController:
-    def __init__(self, safra_use_case: SafraUseCase) -> None:
+    def __init__(
+        self,
+        safra_use_case: SafraUseCase,
+        safra_batch_search_use_case: SafraBatchSearchUseCase,
+    ) -> None:
         self._safra_use_case = safra_use_case
+        self._safra_batch_search_use_case = safra_batch_search_use_case
 
     async def get_token(self) -> TokenOutSchema:
         dto = await self._safra_use_case.get_token()
@@ -111,4 +121,19 @@ class SafraController:
             processed_rows=int(state['processed_rows']),
             failed_rows=int(state['failed_rows']),
             detail=state.get('detail'),
+        )
+
+    async def list_persisted_batch_job_ids(self) -> SafraBatchJobIdsOutSchema:
+        ids = await self._safra_batch_search_use_case.list_distinct_batch_job_ids()
+        return SafraBatchJobIdsOutSchema(batch_job_ids=list(ids))
+
+    async def export_batch_job_results_csv(self, batch_job_id: UUID) -> bytes:
+        rows = await self._safra_batch_search_use_case.list_rows_for_export(
+            batch_job_id,
+        )
+        return encode_safra_batch_search_export_csv(list(rows))
+
+    async def delete_batch_job_search_records(self, batch_job_id: UUID) -> None:
+        await self._safra_batch_search_use_case.delete_persisted_batch_job_rows(
+            batch_job_id,
         )

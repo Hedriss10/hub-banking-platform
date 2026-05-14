@@ -32,9 +32,9 @@ def test_normalize_cpf_complementa_dez_digitos() -> None:
 @pytest.mark.parametrize(
     'bad',
     [
-        ('',),
-        ('123',),
-        ('abcdefghijk',),
+        '',
+        '123',
+        'abcdefghijk',
     ],
 )
 def test_normalize_cpf_invalido(bad: str) -> None:
