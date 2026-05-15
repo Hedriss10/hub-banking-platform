@@ -8,8 +8,10 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.infrastructure.repositories.safra_external import SafraExternalRepository
 from src.infrastructure.seed import emulator_safra as emulator_safra_demo
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
 
 pytestmark = pytest.mark.unit
 
@@ -36,7 +38,7 @@ async def test_get_bankers_parses_rows() -> None:
             {
                 'codigoBanco': 1,
                 'nomeBanco': 'B',
-                'cnpj': 12345678000190,
+                'cnpj': SAFRA_TEST_CNPJ,
                 'ispb': 12345678,
             }
         ]
@@ -234,3 +236,29 @@ async def test_repository_instantiation_creates_api() -> None:
         repo = SafraExternalRepository()
         mock_cls.assert_called_once()
         assert repo.api is mock_cls.return_value
+
+
+@pytest.mark.asyncio
+async def test_get_financial_agreements_maps_response_json() -> None:
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'idConvenio': 1,
+            'nome': 'N',
+            'cnpj': SAFRA_TEST_CNPJ,
+            'nomeFantasia': 'NF',
+            'uf': 'SP',
+        }
+    ]
+    repo.api.get_financial_agreements = AsyncMock(return_value=mock_resp)
+
+    out = await repo.get_financial_agreements()
+
+    assert len(out) == 1
+    assert isinstance(out[0], FinancialAgreementResponse)
+    assert out[0].idConvenio == 1
+    assert out[0].nome == 'N'
+    assert out[0].cnpj == SAFRA_TEST_CNPJ
+    assert out[0].nomeFantasia == 'NF'
+    assert out[0].uf == 'SP'

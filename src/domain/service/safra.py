@@ -6,6 +6,7 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.repositories.safra import SafraRepository
 
 
@@ -21,3 +22,6 @@ class SafraService:
 
     async def get_margem_bpo(self, margem_bpo_dto: MargemBpoDto) -> MargemBpoOutputDto:
         return await self._safra_repository.get_margem_bpo(margem_bpo_dto)
+
+    async def get_financial_agreements(self) -> List[FinancialAgreementResponse]:
+        return await self._safra_repository.get_financial_agreements()

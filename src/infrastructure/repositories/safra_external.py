@@ -7,6 +7,7 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.repositories.safra import SafraRepository
 from src.infrastructure.external_apis.safra import SafraApi
 from src.infrastructure.repositories.helpers.serializer_json import _json_to_banker_rows
@@ -35,3 +36,9 @@ class SafraExternalRepository(SafraRepository):
                 return demo
         response = await self.api.get_margem_bpo(margem_bpo_dto)
         return MargemBpoOutputDto.model_validate(response.json())
+
+    async def get_financial_agreements(self) -> List[FinancialAgreementResponse]:
+        response = await self.api.get_financial_agreements()
+        payload = response.json()
+        rows = payload if isinstance(payload, list) else [payload]
+        return [FinancialAgreementResponse.model_validate(row) for row in rows]

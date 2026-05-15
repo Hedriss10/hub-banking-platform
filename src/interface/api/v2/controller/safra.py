@@ -23,6 +23,9 @@ from src.interface.api.v2.schemas.safra import (
     SafraBatchUploadOutSchema,
     TokenOutSchema,
 )
+from src.interface.api.v2.schemas.safra_financial_agreements import (
+    FinancialAgreementOutSchema,
+)
 
 
 def _token_to_schema(dto: TokenResponse) -> TokenOutSchema:
@@ -137,3 +140,12 @@ class SafraController:
         await self._safra_batch_search_use_case.delete_persisted_batch_job_rows(
             batch_job_id,
         )
+
+    async def list_financial_agreements(self) -> List[FinancialAgreementOutSchema]:
+        financial_agreements = await self._safra_use_case.get_financial_agreements()
+        return [
+            FinancialAgreementOutSchema.model_validate(
+                financial_agreement.model_dump(),
+            )
+            for financial_agreement in financial_agreements
+        ]

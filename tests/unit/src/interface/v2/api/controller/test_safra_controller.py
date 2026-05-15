@@ -2,8 +2,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 from src.domain.dtos.safra import BankerResponse, MargemBpoOutputDto, TokenResponse
+from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.interface.api.v2.controller.safra import SafraController
 from src.interface.api.v2.schemas.safra import MargemBpoInSchema
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
 
 pytestmark = pytest.mark.unit
 
@@ -25,7 +27,7 @@ async def test_list_banks_returns_schemas() -> None:
         BankerResponse(
             codigoBanco=1,
             nomeBanco='N',
-            cnpj=12345678000190,
+            cnpj=SAFRA_TEST_CNPJ,
             ispb=12345678,
         )
     ]
@@ -71,3 +73,26 @@ async def test_consult_margem_bpo_returns_schema() -> None:
     assert out.margem == float_margin
     assert out.cpf == '12345678901'
     uc.get_margem_bpo.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_financial_agreements_returns_schemas() -> None:
+    financial_agreements = [
+        FinancialAgreementResponse(
+            idConvenio=1,
+            nome='N',
+            cnpj=SAFRA_TEST_CNPJ,
+            nomeFantasia='NF',
+            uf='SP',
+        )
+    ]
+    uc = AsyncMock()
+    batch_uc = AsyncMock()
+    uc.get_financial_agreements = AsyncMock(return_value=financial_agreements)
+    controller = SafraController(uc, batch_uc)
+    out = await controller.list_financial_agreements()
+    assert len(out) == 1
+    assert out[0].nome == 'N'
+    assert out[0].cnpj == SAFRA_TEST_CNPJ
+    assert out[0].nomeFantasia == 'NF'
+    assert out[0].uf == 'SP'
