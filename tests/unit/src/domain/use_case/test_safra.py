@@ -7,9 +7,13 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_credit_ligth_house import (
+    CreditLighthouseDto,
+    CreditLighthouseResponse,
+)
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.use_case.safra import SafraUseCase
-from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
 
@@ -98,3 +102,26 @@ async def test_get_financial_agreements() -> None:
     assert out[0].cnpj == SAFRA_TEST_CNPJ
     assert out[0].nomeFantasia == 'NF'
     assert out[0].uf == 'SP'
+
+
+@pytest.mark.asyncio
+async def test_post_credit_lighthouse_delegates_to_service() -> None:
+    dto_in = CreditLighthouseDto(
+        idConvenio=10237,
+        idTipoProduto=1,
+        cpf=SAFRA_TEST_CPF,
+    )
+    expected = [
+        CreditLighthouseResponse(
+            decisaoFarol=2,
+            cpf=SAFRA_TEST_CPF,
+            motivos=['A'],
+            timeOut=0,
+        )
+    ]
+    service = AsyncMock()
+    service.post_credit_lighthouse = AsyncMock(return_value=expected)
+    uc = SafraUseCase(service)
+    out = await uc.post_credit_lighthouse(dto_in)
+    assert out == expected
+    service.post_credit_lighthouse.assert_awaited_once_with(dto_in)

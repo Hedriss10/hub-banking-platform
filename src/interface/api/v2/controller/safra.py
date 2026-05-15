@@ -6,6 +6,10 @@ from fastapi import BackgroundTasks, HTTPException, UploadFile, status
 from src.core.config.settings import get_settings
 from src.core.exceptions.custom import SafraBatchCsvValidationError
 from src.domain.dtos.safra import BankerResponse, MargemBpoDto, TokenResponse
+from src.domain.dtos.safra_credit_ligth_house import (
+    CreditLighthouseDto,
+    CreditLighthouseResponse,
+)
 from src.domain.use_case.safra import SafraUseCase
 from src.domain.use_case.safra_batch_search import SafraBatchSearchUseCase
 from src.infrastructure.redis.safra_batch_job_store import job_get, job_save
@@ -23,6 +27,10 @@ from src.interface.api.v2.schemas.safra import (
     SafraBatchUploadOutSchema,
     TokenOutSchema,
 )
+from src.interface.api.v2.schemas.safra_credit_ligth_house import (
+    CreditLighthouseInSchema,
+    CreditLighthouseOutSchema,
+)
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
@@ -34,6 +42,14 @@ def _token_to_schema(dto: TokenResponse) -> TokenOutSchema:
 
 def _banker_to_schema(dto: BankerResponse) -> BankerOutSchema:
     return BankerOutSchema.model_validate(dto.model_dump(mode='json'))
+
+
+def _credit_lighthouse_to_schema(
+    dto: CreditLighthouseResponse,
+) -> CreditLighthouseOutSchema:
+    return CreditLighthouseOutSchema.model_validate(
+        dto.model_dump(mode='json'),
+    )
 
 
 class SafraController:
@@ -149,3 +165,10 @@ class SafraController:
             )
             for financial_agreement in financial_agreements
         ]
+
+    async def post_credit_lighthouse(
+        self, body: CreditLighthouseInSchema
+    ) -> List[CreditLighthouseOutSchema]:
+        dto = CreditLighthouseDto.model_validate(body.model_dump())
+        items = await self._safra_use_case.post_credit_lighthouse(dto)
+        return [_credit_lighthouse_to_schema(row) for row in items]

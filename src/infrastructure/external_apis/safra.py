@@ -3,6 +3,9 @@ import httpx
 from src.core.config.settings import get_settings
 from src.core.exceptions.custom import InfrastructureException
 from src.domain.dtos.safra import MargemBpoDto
+from src.domain.dtos.safra_credit_ligth_house import (
+    CreditLighthouseDto,
+)
 from src.infrastructure.external_apis.api_base_client import ApiBaseClient
 
 settings = get_settings()
@@ -11,6 +14,7 @@ URL_BANKERS = '/api/v1/Banco'
 URL_TOKEN = '/api/v1/Token'
 URL_MARGEM_BPO = '/api/v1/ConsultaMargem/Bpo'
 URL_FINANCIAL_AGREEMENTS = '/api/v1/Convenio'
+URL_CREDIT_LIGHTHOUSE = '/api/v1/FarolCredito'
 
 
 class SafraApi(ApiBaseClient):
@@ -68,4 +72,16 @@ class SafraApi(ApiBaseClient):
             'method': 'GET',
             'url': URL_FINANCIAL_AGREEMENTS,
             'headers': {'Authorization': f'Bearer {access_token}'},
+        })
+
+    async def post_credit_lighthouse(
+        self, credit_lighthouse_dto: CreditLighthouseDto
+    ) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'POST',
+            'url': URL_CREDIT_LIGHTHOUSE,
+            'headers': {'Authorization': f'Bearer {access_token}'},
+            'json': credit_lighthouse_dto.model_dump(),
         })
