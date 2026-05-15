@@ -8,10 +8,14 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_credit_ligth_house import (
+    CreditLighthouseDto,
+    CreditLighthouseResponse,
+)
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.infrastructure.repositories.safra_external import SafraExternalRepository
 from src.infrastructure.seed import emulator_safra as emulator_safra_demo
-from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
 
@@ -262,3 +266,55 @@ async def test_get_financial_agreements_maps_response_json() -> None:
     assert out[0].cnpj == SAFRA_TEST_CNPJ
     assert out[0].nomeFantasia == 'NF'
     assert out[0].uf == 'SP'
+
+
+@pytest.mark.asyncio
+async def test_post_credit_lighthouse_maps_list_json() -> None:
+    dto_in = CreditLighthouseDto(
+        idConvenio=10237,
+        idTipoProduto=1,
+        cpf=SAFRA_TEST_CPF,
+    )
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'decisaoFarol': 1,
+            'cpf': SAFRA_TEST_CPF,
+            'motivos': ['APROVADO'],
+            'timeOut': 0,
+        },
+    ]
+    repo.api.post_credit_lighthouse = AsyncMock(return_value=mock_resp)
+
+    out = await repo.post_credit_lighthouse(dto_in)
+
+    assert len(out) == 1
+    assert isinstance(out[0], CreditLighthouseResponse)
+    assert out[0].decisaoFarol == 1
+    repo.api.post_credit_lighthouse.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_post_credit_lighthouse_wraps_single_object_json() -> None:
+    dto_in = CreditLighthouseDto(
+        idConvenio=1,
+        idTipoProduto=2,
+        cpf=12345678901,
+    )
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = {
+        'decisaoFarol': 0,
+        'cpf': 12345678901,
+        'motivos': [],
+        'timeOut': 1,
+        'extraIgnored': True,
+    }
+    repo.api.post_credit_lighthouse = AsyncMock(return_value=mock_resp)
+
+    out = await repo.post_credit_lighthouse(dto_in)
+
+    assert len(out) == 1
+    assert out[0].decisaoFarol == 0
+    assert out[0].timeOut == 1

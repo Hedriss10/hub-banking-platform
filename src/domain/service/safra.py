@@ -6,6 +6,10 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_credit_ligth_house import (
+    CreditLighthouseDto,
+    CreditLighthouseResponse,
+)
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.repositories.safra import SafraRepository
 
@@ -25,3 +29,10 @@ class SafraService:
 
     async def get_financial_agreements(self) -> List[FinancialAgreementResponse]:
         return await self._safra_repository.get_financial_agreements()
+
+    async def post_credit_lighthouse(
+        self, credit_lighthouse_dto: CreditLighthouseDto
+    ) -> List[CreditLighthouseResponse]:
+        return await self._safra_repository.post_credit_lighthouse(
+            credit_lighthouse_dto
+        )

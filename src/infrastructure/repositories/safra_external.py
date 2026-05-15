@@ -7,6 +7,10 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_credit_ligth_house import (
+    CreditLighthouseDto,
+    CreditLighthouseResponse,
+)
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.repositories.safra import SafraRepository
 from src.infrastructure.external_apis.safra import SafraApi
@@ -42,3 +46,11 @@ class SafraExternalRepository(SafraRepository):
         payload = response.json()
         rows = payload if isinstance(payload, list) else [payload]
         return [FinancialAgreementResponse.model_validate(row) for row in rows]
+
+    async def post_credit_lighthouse(
+        self, credit_lighthouse_dto: CreditLighthouseDto
+    ) -> List[CreditLighthouseResponse]:
+        response = await self.api.post_credit_lighthouse(credit_lighthouse_dto)
+        payload = response.json()
+        rows = payload if isinstance(payload, list) else [payload]
+        return [CreditLighthouseResponse.model_validate(row) for row in rows]

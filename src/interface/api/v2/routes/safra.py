@@ -14,6 +14,10 @@ from src.interface.api.v2.schemas.safra import (
     SafraBatchUploadOutSchema,
     TokenOutSchema,
 )
+from src.interface.api.v2.schemas.safra_credit_ligth_house import (
+    CreditLighthouseInSchema,
+    CreditLighthouseOutSchema,
+)
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
@@ -190,3 +194,18 @@ async def get_safra_financial_agreements(
     _employee_id: CurrentEmployeeIdDep,
 ) -> List[FinancialAgreementOutSchema]:
     return await controller.list_financial_agreements()
+
+
+@router.post(
+    '/credit-lighthouse',
+    response_model=List[CreditLighthouseOutSchema],
+    status_code=status.HTTP_200_OK,
+    summary='Post credit lighthouse',
+    description='Post credit lighthouse from Safra',
+)
+async def post_safra_credit_lighthouse(
+    body: CreditLighthouseInSchema,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[CreditLighthouseOutSchema]:
+    return await controller.post_credit_lighthouse(body)

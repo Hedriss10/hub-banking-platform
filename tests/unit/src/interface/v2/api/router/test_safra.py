@@ -4,10 +4,11 @@ import pytest
 from httpx import AsyncClient
 from src.domain.dtos.safra import BankerResponse, MargemBpoOutputDto, TokenResponse
 from src.domain.dtos.safra_batch_search import SafraBatchSearchExportRowDTO
+from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseResponse
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
 from starlette import status
-from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
 
@@ -20,6 +21,7 @@ _SAFRA_BATCH_JOB_IDS = '/api/v2/safra/batch/search/job-ids'
 _SAFRA_BATCH_EXPORT_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/export'
 _SAFRA_BATCH_DELETE_TEMPLATE = '/api/v2/safra/batch/search/{job_id}'
 _SAFRA_FINANCIAL_AGREEMENTS = '/api/v2/safra/financial-agreements'
+_SAFRA_CREDIT_LIGHTHOUSE = '/api/v2/safra/credit-lighthouse'
 
 
 _MARGEM_OUT = MargemBpoOutputDto(
@@ -352,3 +354,32 @@ async def test_get_safra_financial_agreements(
     assert response.json()[0]['cnpj'] == SAFRA_TEST_CNPJ
     assert response.json()[0]['nomeFantasia'] == 'NF'
     assert response.json()[0]['uf'] == 'SP'
+
+
+@pytest.mark.asyncio
+async def test_post_safra_credit_lighthouse(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    items = [
+        CreditLighthouseResponse(
+            decisaoFarol=1,
+            cpf=SAFRA_TEST_CPF,
+            idTipoProduto=2,
+            motivos=['OK'],
+            timeOut=0,
+        ),
+    ]
+    mock_safra_use_case.post_credit_lighthouse = AsyncMock(return_value=items)
+    payload = {
+        'idConvenio': 10237,
+        'idTipoProduto': 1,
+        'cpf': SAFRA_TEST_CPF,
+    }
+    response = await async_safra_client.post(
+        _SAFRA_CREDIT_LIGHTHOUSE,
+        json=payload,
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == [it.model_dump(mode='json') for it in items]
+    mock_safra_use_case.post_credit_lighthouse.assert_awaited_once()

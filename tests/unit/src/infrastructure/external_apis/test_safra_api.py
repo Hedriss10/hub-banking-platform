@@ -4,6 +4,7 @@ import httpx
 import pytest
 from src.core.exceptions.custom import InfrastructureException
 from src.domain.dtos.safra import MargemBpoDto
+from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseDto
 from src.infrastructure.external_apis.safra import SafraApi
 
 pytestmark = pytest.mark.unit
@@ -158,3 +159,34 @@ async def test_get_financial_agreements_uses_bearer_from_token(
     assert out.json() == []
     second_call = mock_req.await_args_list[1][0][0]
     assert second_call['headers']['Authorization'] == 'Bearer abc'
+
+
+@pytest.mark.asyncio
+async def test_post_credit_lighthouse_posts_farol_credito(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    farol_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/farol'),
+        json={'decisaoFarol': 1},
+    )
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return farol_resp
+
+    dto = CreditLighthouseDto(idConvenio=1, idTipoProduto=5, cpf=9999999909)
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.post_credit_lighthouse(dto)
+
+    assert out.json()['decisaoFarol'] == 1
+    second = mock_req.await_args_list[1][0][0]
+    assert second['method'] == 'POST'
+    assert second['url'] == '/api/v1/FarolCredito'
+    assert second['headers']['Authorization'] == 'Bearer abc'
+    assert second['json'] == dto.model_dump()
