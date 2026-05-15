@@ -26,6 +26,8 @@ class Settings(BaseSettings):
 
     # CORS
     BACKEND_CORS_ORIGINS: Union[List[str], List[AnyHttpUrl]] = []
+    # Opcional; ex.: permite qualquer porta no mesmo IP: https?://31\.97\.165\.27(:\d+)?$
+    BACKEND_CORS_ORIGIN_REGEX: Optional[str] = None
 
     DEBUG: bool = False
 

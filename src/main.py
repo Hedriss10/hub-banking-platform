@@ -45,9 +45,10 @@ async def root() -> dict[str, str]:
 _cors_origins = [
     str(o).strip() for o in settings.BACKEND_CORS_ORIGINS if str(o).strip()
 ]
-_allow_origin_regex: Optional[str] = None
+_user_regex = (settings.BACKEND_CORS_ORIGIN_REGEX or '').strip() or None
+_allow_origin_regex: Optional[str] = _user_regex
 _allow_credentials = True
-if not _cors_origins:
+if not _cors_origins and _allow_origin_regex is None:
     if settings.DEBUG:
         _allow_origin_regex = r'https?://(localhost|127\.0\.0\.1)(:\d+)?$'
     else:
