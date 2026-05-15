@@ -14,6 +14,9 @@ from src.interface.api.v2.schemas.safra import (
     SafraBatchUploadOutSchema,
     TokenOutSchema,
 )
+from src.interface.api.v2.schemas.safra_financial_agreements import (
+    FinancialAgreementOutSchema,
+)
 
 tags_metadata = {
     'name': 'Safra',
@@ -173,3 +176,17 @@ async def delete_safra_batch_search_job(
 ) -> Response:
     await controller.delete_batch_job_search_records(batch_job_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    '/financial-agreements',
+    response_model=List[FinancialAgreementOutSchema],
+    status_code=status.HTTP_200_OK,
+    summary='List financial agreements',
+    description='List financial agreements from Safra',
+)
+async def get_safra_financial_agreements(
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[FinancialAgreementOutSchema]:
+    return await controller.list_financial_agreements()

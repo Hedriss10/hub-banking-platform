@@ -7,7 +7,9 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.use_case.safra import SafraUseCase
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
 
 pytestmark = pytest.mark.unit
 
@@ -30,7 +32,7 @@ async def test_get_bankers() -> None:
         BankerResponse(
             codigoBanco=1,
             nomeBanco='X',
-            cnpj=12345678000190,
+            cnpj=SAFRA_TEST_CNPJ,
             ispb=12345678,
         )
     ]
@@ -72,3 +74,27 @@ async def test_get_margem_bpo() -> None:
     out = await uc.get_margem_bpo(dto_in)
     assert out == dto_out
     service.get_margem_bpo.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_get_financial_agreements() -> None:
+    financial_agreements = [
+        FinancialAgreementResponse(
+            idConvenio=1,
+            nome='N',
+            cnpj=SAFRA_TEST_CNPJ,
+            nomeFantasia='NF',
+            uf='SP',
+        )
+    ]
+    service = AsyncMock()
+    service.get_financial_agreements = AsyncMock(return_value=financial_agreements)
+    uc = SafraUseCase(service)
+    out = await uc.get_financial_agreements()
+    assert out == financial_agreements
+    service.get_financial_agreements.assert_awaited_once()
+    assert out[0].idConvenio == 1
+    assert out[0].nome == 'N'
+    assert out[0].cnpj == SAFRA_TEST_CNPJ
+    assert out[0].nomeFantasia == 'NF'
+    assert out[0].uf == 'SP'

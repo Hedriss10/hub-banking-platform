@@ -4,8 +4,10 @@ import pytest
 from httpx import AsyncClient
 from src.domain.dtos.safra import BankerResponse, MargemBpoOutputDto, TokenResponse
 from src.domain.dtos.safra_batch_search import SafraBatchSearchExportRowDTO
+from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
 from starlette import status
+from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ
 
 pytestmark = pytest.mark.unit
 
@@ -17,6 +19,7 @@ _SAFRA_BATCH_STATUS_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/status'
 _SAFRA_BATCH_JOB_IDS = '/api/v2/safra/batch/search/job-ids'
 _SAFRA_BATCH_EXPORT_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/export'
 _SAFRA_BATCH_DELETE_TEMPLATE = '/api/v2/safra/batch/search/{job_id}'
+_SAFRA_FINANCIAL_AGREEMENTS = '/api/v2/safra/financial-agreements'
 
 
 _MARGEM_OUT = MargemBpoOutputDto(
@@ -59,7 +62,7 @@ async def test_get_safra_banks(
     row = BankerResponse(
         codigoBanco=1,
         nomeBanco='Bank',
-        cnpj=12345678000190,
+        cnpj=SAFRA_TEST_CNPJ,
         ispb=12345678,
     )
     mock_safra_use_case.get_bankers = AsyncMock(return_value=[row])
@@ -322,3 +325,30 @@ async def test_delete_safra_batch_job_not_found(
     response = await async_safra_client.delete(url)
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()['code'] == 'SAFRA_BATCH_SEARCH_NOT_FOUND'
+
+
+@pytest.mark.asyncio
+async def test_get_safra_financial_agreements(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    financial_agreements = [
+        FinancialAgreementResponse(
+            idConvenio=1,
+            nome='N',
+            cnpj=SAFRA_TEST_CNPJ,
+            nomeFantasia='NF',
+            uf='SP',
+        )
+    ]
+    mock_safra_use_case.get_financial_agreements = AsyncMock(
+        return_value=financial_agreements
+    )
+    response = await async_safra_client.get(_SAFRA_FINANCIAL_AGREEMENTS)
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == [fa.model_dump() for fa in financial_agreements]
+    mock_safra_use_case.get_financial_agreements.assert_awaited_once()
+    assert response.json()[0]['nome'] == 'N'
+    assert response.json()[0]['cnpj'] == SAFRA_TEST_CNPJ
+    assert response.json()[0]['nomeFantasia'] == 'NF'
+    assert response.json()[0]['uf'] == 'SP'

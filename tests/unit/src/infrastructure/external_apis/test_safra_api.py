@@ -127,3 +127,34 @@ async def test_get_margem_bpo_posts_consulta_margem(safra_api: SafraApi) -> None
     assert second['url'] == '/api/v1/ConsultaMargem/Bpo'
     assert second['headers']['Authorization'] == 'Bearer abc'
     assert second['json'] == dto.model_dump()
+
+
+@pytest.mark.asyncio
+async def test_get_financial_agreements_uses_bearer_from_token(
+    safra_api: SafraApi,
+) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    financial_agreements_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/financial-agreements'),
+        json=[],
+    )
+    urls: list[str] = []
+
+    async def _req(data: dict):
+        urls.append(data['url'])
+        if data['method'] == 'POST':
+            return token_resp
+        return financial_agreements_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.get_financial_agreements()
+    assert urls == ['/api/v1/Token', '/api/v1/Convenio']
+    assert out.json() == []
+    second_call = mock_req.await_args_list[1][0][0]
+    assert second_call['headers']['Authorization'] == 'Bearer abc'

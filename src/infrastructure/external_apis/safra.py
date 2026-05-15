@@ -10,6 +10,7 @@ settings = get_settings()
 URL_BANKERS = '/api/v1/Banco'
 URL_TOKEN = '/api/v1/Token'
 URL_MARGEM_BPO = '/api/v1/ConsultaMargem/Bpo'
+URL_FINANCIAL_AGREEMENTS = '/api/v1/Convenio'
 
 
 class SafraApi(ApiBaseClient):
@@ -58,4 +59,13 @@ class SafraApi(ApiBaseClient):
             'url': URL_MARGEM_BPO,
             'headers': {'Authorization': f'Bearer {access_token}'},
             'json': margem_bpo_dto.model_dump(),
+        })
+
+    async def get_financial_agreements(self) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'GET',
+            'url': URL_FINANCIAL_AGREEMENTS,
+            'headers': {'Authorization': f'Bearer {access_token}'},
         })
