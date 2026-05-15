@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
@@ -40,14 +42,25 @@ async def root() -> dict[str, str]:
     return {'message': 'API Hub Banking Platform Acesse a Documentação em /docs'}
 
 
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-    )
+_cors_origins = [
+    str(o).strip() for o in settings.BACKEND_CORS_ORIGINS if str(o).strip()
+]
+_allow_origin_regex: Optional[str] = None
+_allow_credentials = True
+if not _cors_origins:
+    if settings.DEBUG:
+        _allow_origin_regex = r'https?://(localhost|127\.0\.0\.1)(:\d+)?$'
+    else:
+        _allow_credentials = False
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=_allow_credentials,
+    allow_origin_regex=_allow_origin_regex,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 load_all_models()
 
