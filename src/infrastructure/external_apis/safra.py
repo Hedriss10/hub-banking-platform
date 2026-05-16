@@ -15,6 +15,7 @@ URL_TOKEN = '/api/v1/Token'
 URL_MARGEM_BPO = '/api/v1/ConsultaMargem/Bpo'
 URL_FINANCIAL_AGREEMENTS = '/api/v1/Convenio'
 URL_CREDIT_LIGHTHOUSE = '/api/v1/FarolCredito'
+URL_LIST_SAFRA_TABLES = '/api/v1/TabelaJuros'
 
 
 class SafraApi(ApiBaseClient):
@@ -84,4 +85,13 @@ class SafraApi(ApiBaseClient):
             'url': URL_CREDIT_LIGHTHOUSE,
             'headers': {'Authorization': f'Bearer {access_token}'},
             'json': credit_lighthouse_dto.model_dump(),
+        })
+
+    async def list_safra_tables(self, convenio_id: int) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'GET',
+            'url': f'{URL_LIST_SAFRA_TABLES}/{convenio_id}',
+            'headers': {'Authorization': f'Bearer {access_token}'},
         })

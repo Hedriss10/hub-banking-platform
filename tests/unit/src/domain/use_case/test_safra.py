@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -12,6 +13,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.use_case.safra import SafraUseCase
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
@@ -125,3 +127,24 @@ async def test_post_credit_lighthouse_delegates_to_service() -> None:
     out = await uc.post_credit_lighthouse(dto_in)
     assert out == expected
     service.post_credit_lighthouse.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_list_safra_tables_delegates_to_service() -> None:
+    safra_tables = [
+        SafraTablesDto(
+            id=1,
+            descricao='Descrição',
+            dtInicioVigencia=datetime.now(),
+            dtFimVigencia=datetime.now(),
+        )
+    ]
+    service = AsyncMock()
+    service.list_safra_tables = AsyncMock(return_value=safra_tables)
+    use_case = SafraUseCase(service)
+    out = await use_case.list_safra_tables(1)
+    assert out == safra_tables
+    service.list_safra_tables.assert_awaited_once_with(1)
+    assert len(out) == 1
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'

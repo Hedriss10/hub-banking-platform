@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -7,6 +8,7 @@ from src.domain.dtos.safra_batch_search import SafraBatchSearchExportRowDTO
 from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseResponse
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
+from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 from starlette import status
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
@@ -22,7 +24,7 @@ _SAFRA_BATCH_EXPORT_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/export'
 _SAFRA_BATCH_DELETE_TEMPLATE = '/api/v2/safra/batch/search/{job_id}'
 _SAFRA_FINANCIAL_AGREEMENTS = '/api/v2/safra/financial-agreements'
 _SAFRA_CREDIT_LIGHTHOUSE = '/api/v2/safra/credit-lighthouse'
-
+_SAFRA_TABLES = '/api/v2/safra/tables/{convenio_id}'
 
 _MARGEM_OUT = MargemBpoOutputDto(
     cpf='01437872506',
@@ -383,3 +385,26 @@ async def test_post_safra_credit_lighthouse(
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == [it.model_dump(mode='json') for it in items]
     mock_safra_use_case.post_credit_lighthouse.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_safra_tables(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    safra_tables = [
+        SafraTablesOutSchema(
+            id=1,
+            descricao='Descrição',
+            dtInicioVigencia=datetime.now(),
+            dtFimVigencia=datetime.now(),
+        )
+    ]
+    mock_safra_use_case.list_safra_tables = AsyncMock(return_value=safra_tables)
+    response = await async_safra_client.get(_SAFRA_TABLES.format(convenio_id=1))
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]['id'] == 1
+    assert data[0]['descricao'] == 'Descrição'
+    mock_safra_use_case.list_safra_tables.assert_awaited_once_with(1)

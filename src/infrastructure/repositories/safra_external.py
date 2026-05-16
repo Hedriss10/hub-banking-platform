@@ -12,6 +12,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.repositories.safra import SafraRepository
 from src.infrastructure.external_apis.safra import SafraApi
 from src.infrastructure.repositories.helpers.serializer_json import _json_to_banker_rows
@@ -54,3 +55,9 @@ class SafraExternalRepository(SafraRepository):
         payload = response.json()
         rows = payload if isinstance(payload, list) else [payload]
         return [CreditLighthouseResponse.model_validate(row) for row in rows]
+
+    async def list_safra_tables(self, convenio_id: int) -> List[SafraTablesDto]:
+        response = await self.api.list_safra_tables(convenio_id)
+        payload = response.json()
+        rows = payload if isinstance(payload, list) else [payload]
+        return [SafraTablesDto.model_validate(row) for row in rows]

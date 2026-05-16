@@ -34,6 +34,7 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
+from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 
 
 def _token_to_schema(dto: TokenResponse) -> TokenOutSchema:
@@ -172,3 +173,10 @@ class SafraController:
         dto = CreditLighthouseDto.model_validate(body.model_dump())
         items = await self._safra_use_case.post_credit_lighthouse(dto)
         return [_credit_lighthouse_to_schema(row) for row in items]
+
+    async def list_safra_tables(self, convenio_id: int) -> List[SafraTablesOutSchema]:
+        safra_tables = await self._safra_use_case.list_safra_tables(convenio_id)
+        return [
+            SafraTablesOutSchema.model_validate(safra_table.model_dump())
+            for safra_table in safra_tables
+        ]

@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -11,6 +12,7 @@ from src.interface.api.v2.schemas.safra import MargemBpoInSchema
 from src.interface.api.v2.schemas.safra_credit_ligth_house import (
     CreditLighthouseInSchema,
 )
+from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
@@ -130,3 +132,23 @@ async def test_post_credit_lighthouse_returns_schemas() -> None:
     assert out[0].decisaoFarol == decisao_esperada
     assert out[0].cpf == SAFRA_TEST_CPF
     uc.post_credit_lighthouse.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_safra_tables_returns_schemas() -> None:
+    safra_tables = [
+        SafraTablesOutSchema(
+            id=1,
+            descricao='Descrição',
+            dtInicioVigencia=datetime.now(),
+            dtFimVigencia=datetime.now(),
+        )
+    ]
+    uc = AsyncMock()
+    batch_uc = AsyncMock()
+    uc.list_safra_tables = AsyncMock(return_value=safra_tables)
+    controller = SafraController(uc, batch_uc)
+    out = await controller.list_safra_tables(1)
+    assert len(out) == 1
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'

@@ -13,6 +13,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_tables import SafraTablesDto
 from src.infrastructure.repositories.safra_external import SafraExternalRepository
 from src.infrastructure.seed import emulator_safra as emulator_safra_demo
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
@@ -318,3 +319,25 @@ async def test_post_credit_lighthouse_wraps_single_object_json() -> None:
     assert len(out) == 1
     assert out[0].decisaoFarol == 0
     assert out[0].timeOut == 1
+
+
+@pytest.mark.asyncio
+async def test_list_safra_tables_maps_response_json() -> None:
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'id': 1,
+            'descricao': 'Descrição',
+            'dtInicioVigencia': '2026-01-01T00:00:00',
+            'dtFimVigencia': '2026-01-01T00:00:00',
+        }
+    ]
+    repo.api.list_safra_tables = AsyncMock(return_value=mock_resp)
+
+    out = await repo.list_safra_tables(1)
+
+    assert len(out) == 1
+    assert isinstance(out[0], SafraTablesDto)
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'
