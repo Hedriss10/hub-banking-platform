@@ -21,6 +21,7 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
+from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 
 tags_metadata = {
     'name': 'Safra',
@@ -209,3 +210,18 @@ async def post_safra_credit_lighthouse(
     _employee_id: CurrentEmployeeIdDep,
 ) -> List[CreditLighthouseOutSchema]:
     return await controller.post_credit_lighthouse(body)
+
+
+@router.get(
+    '/tables/{convenio_id}',
+    response_model=List[SafraTablesOutSchema],
+    status_code=status.HTTP_200_OK,
+    summary='List safra tables',
+    description='List safra tables from Safra',
+)
+async def get_safra_tables(
+    convenio_id: int,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[SafraTablesOutSchema]:
+    return await controller.list_safra_tables(convenio_id)

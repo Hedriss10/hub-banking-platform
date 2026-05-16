@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -12,6 +13,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.service.safra import SafraService
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
@@ -131,3 +133,24 @@ async def test_post_credit_lighthouse_delegates_to_repository() -> None:
     assert out[0].decisaoFarol == 1
     assert out[0].cpf == SAFRA_TEST_CPF
     assert out[0].idTipoProduto == id_tipo_retorno
+
+
+@pytest.mark.asyncio
+async def test_list_safra_tables_delegates_to_repository() -> None:
+    safra_tables = [
+        SafraTablesDto(
+            id=1,
+            descricao='Descrição',
+            dtInicioVigencia=datetime.now(),
+            dtFimVigencia=datetime.now(),
+        )
+    ]
+    repo = AsyncMock()
+    repo.list_safra_tables = AsyncMock(return_value=safra_tables)
+    service = SafraService(repo)
+    out = await service.list_safra_tables(1)
+    assert out == safra_tables
+    repo.list_safra_tables.assert_awaited_once_with(1)
+    assert len(out) == 1
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'

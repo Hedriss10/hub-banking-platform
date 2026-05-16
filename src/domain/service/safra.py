@@ -11,6 +11,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.repositories.safra import SafraRepository
 
 
@@ -36,3 +37,6 @@ class SafraService:
         return await self._safra_repository.post_credit_lighthouse(
             credit_lighthouse_dto
         )
+
+    async def list_safra_tables(self, convenio_id: int) -> List[SafraTablesDto]:
+        return await self._safra_repository.list_safra_tables(convenio_id)

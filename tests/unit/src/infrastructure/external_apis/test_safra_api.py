@@ -190,3 +190,31 @@ async def test_post_credit_lighthouse_posts_farol_credito(safra_api: SafraApi) -
     assert second['url'] == '/api/v1/FarolCredito'
     assert second['headers']['Authorization'] == 'Bearer abc'
     assert second['json'] == dto.model_dump()
+
+
+@pytest.mark.asyncio
+async def test_list_safra_tables_uses_bearer_from_token(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    safra_tables_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/tables'),
+        json=[],
+    )
+    urls: list[str] = []
+
+    async def _req(data: dict):
+        urls.append(data['url'])
+        if data['method'] == 'POST':
+            return token_resp
+        return safra_tables_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.list_safra_tables(1)
+    assert out.json() == []
+    second_call = mock_req.await_args_list[1][0][0]
+    assert second_call['headers']['Authorization'] == 'Bearer abc'
