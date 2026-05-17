@@ -13,12 +13,16 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.infrastructure.repositories.safra_external import SafraExternalRepository
 from src.infrastructure.seed import emulator_safra as emulator_safra_demo
+from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
+
+_REPOSITORY_PROPOSTA_STUB_ID = 441
 
 
 @pytest.mark.asyncio
@@ -341,3 +345,18 @@ async def test_list_safra_tables_maps_response_json() -> None:
     assert isinstance(out[0], SafraTablesDto)
     assert out[0].id == 1
     assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_post_safra_proposal_maps_json() -> None:
+    dto_in = ProposalDto.model_validate(minimal_safra_proposal_payload())
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = {'idProposta': _REPOSITORY_PROPOSTA_STUB_ID}
+    repo.api.post_safra_proposal = AsyncMock(return_value=mock_resp)
+
+    out = await repo.post_safra_proposal(dto_in)
+
+    assert isinstance(out, ProposalResponseDto)
+    assert out.idProposta == _REPOSITORY_PROPOSTA_STUB_ID
+    repo.api.post_safra_proposal.assert_awaited_once_with(dto_in)

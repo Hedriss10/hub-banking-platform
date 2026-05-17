@@ -11,6 +11,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.repositories.safra import SafraRepository
 
@@ -40,3 +41,8 @@ class SafraService:
 
     async def list_safra_tables(self, convenio_id: int) -> List[SafraTablesDto]:
         return await self._safra_repository.list_safra_tables(convenio_id)
+
+    async def post_safra_proposal(
+        self, proposal_dto: ProposalDto
+    ) -> ProposalResponseDto:
+        return await self._safra_repository.post_safra_proposal(proposal_dto)

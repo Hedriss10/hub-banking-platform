@@ -6,6 +6,7 @@ from src.domain.dtos.safra import MargemBpoDto
 from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
 )
+from src.domain.dtos.safra_proposal import ProposalDto
 from src.infrastructure.external_apis.api_base_client import ApiBaseClient
 
 settings = get_settings()
@@ -16,6 +17,7 @@ URL_MARGEM_BPO = '/api/v1/ConsultaMargem/Bpo'
 URL_FINANCIAL_AGREEMENTS = '/api/v1/Convenio'
 URL_CREDIT_LIGHTHOUSE = '/api/v1/FarolCredito'
 URL_LIST_SAFRA_TABLES = '/api/v1/TabelaJuros'
+URL_PROPOSAL = '/api/v1/Propostas/Novo'
 
 
 class SafraApi(ApiBaseClient):
@@ -94,4 +96,14 @@ class SafraApi(ApiBaseClient):
             'method': 'GET',
             'url': f'{URL_LIST_SAFRA_TABLES}/{convenio_id}',
             'headers': {'Authorization': f'Bearer {access_token}'},
+        })
+
+    async def post_safra_proposal(self, proposal_dto: ProposalDto) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'POST',
+            'url': URL_PROPOSAL,
+            'headers': {'Authorization': f'Bearer {access_token}'},
+            'json': proposal_dto.model_dump(),
         })

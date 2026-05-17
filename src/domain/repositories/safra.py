@@ -12,6 +12,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 
 
@@ -37,3 +38,8 @@ class SafraRepository(ABC):
 
     @abstractmethod
     async def list_safra_tables(self, convenio_id: int) -> List[SafraTablesDto]: ...
+
+    @abstractmethod
+    async def post_safra_proposal(
+        self, proposal_dto: ProposalDto
+    ) -> ProposalResponseDto: ...

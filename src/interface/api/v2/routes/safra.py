@@ -21,6 +21,10 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
+from src.interface.api.v2.schemas.safra_proposal import (
+    ProposalResponseSchema,
+    ProposalSchema,
+)
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 
 tags_metadata = {
@@ -225,3 +229,18 @@ async def get_safra_tables(
     _employee_id: CurrentEmployeeIdDep,
 ) -> List[SafraTablesOutSchema]:
     return await controller.list_safra_tables(convenio_id)
+
+
+@router.post(
+    '/proposal',
+    response_model=ProposalResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary='Post proposal',
+    description='Post proposal from Safra',
+)
+async def post_safra_proposal(
+    body: ProposalSchema,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> ProposalResponseSchema:
+    return await controller.post_safra_proposal(body)

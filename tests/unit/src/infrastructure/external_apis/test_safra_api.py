@@ -5,9 +5,13 @@ import pytest
 from src.core.exceptions.custom import InfrastructureException
 from src.domain.dtos.safra import MargemBpoDto
 from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseDto
+from src.domain.dtos.safra_proposal import ProposalDto
 from src.infrastructure.external_apis.safra import SafraApi
+from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
 
 pytestmark = pytest.mark.unit
+
+_PROPOSTAS_NOVO_STUB_ID = 12
 
 
 @pytest.fixture
@@ -218,3 +222,34 @@ async def test_list_safra_tables_uses_bearer_from_token(safra_api: SafraApi) -> 
     assert out.json() == []
     second_call = mock_req.await_args_list[1][0][0]
     assert second_call['headers']['Authorization'] == 'Bearer abc'
+
+
+@pytest.mark.asyncio
+async def test_post_safra_proposal_posts_propostas_novo(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    proposal_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/propostas'),
+        json={'idProposta': _PROPOSTAS_NOVO_STUB_ID},
+    )
+    dto_in = ProposalDto.model_validate(minimal_safra_proposal_payload())
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return proposal_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.post_safra_proposal(dto_in)
+
+    assert out.json()['idProposta'] == _PROPOSTAS_NOVO_STUB_ID
+    proposal_call = mock_req.await_args_list[1][0][0]
+    assert proposal_call['method'] == 'POST'
+    assert proposal_call['url'] == '/api/v1/Propostas/Novo'
+    assert proposal_call['headers']['Authorization'] == 'Bearer abc'
+    assert proposal_call['json'] == dto_in.model_dump()

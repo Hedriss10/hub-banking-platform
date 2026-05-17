@@ -7,9 +7,11 @@ from src.domain.dtos.safra import BankerResponse, MargemBpoOutputDto, TokenRespo
 from src.domain.dtos.safra_batch_search import SafraBatchSearchExportRowDTO
 from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseResponse
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_proposal import ProposalResponseDto
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 from starlette import status
+from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
@@ -25,6 +27,7 @@ _SAFRA_BATCH_DELETE_TEMPLATE = '/api/v2/safra/batch/search/{job_id}'
 _SAFRA_FINANCIAL_AGREEMENTS = '/api/v2/safra/financial-agreements'
 _SAFRA_CREDIT_LIGHTHOUSE = '/api/v2/safra/credit-lighthouse'
 _SAFRA_TABLES = '/api/v2/safra/tables/{convenio_id}'
+_SAFRA_PROPOSAL = '/api/v2/safra/proposal'
 
 _MARGEM_OUT = MargemBpoOutputDto(
     cpf='01437872506',
@@ -408,3 +411,19 @@ async def test_get_safra_tables(
     assert data[0]['id'] == 1
     assert data[0]['descricao'] == 'Descrição'
     mock_safra_use_case.list_safra_tables.assert_awaited_once_with(1)
+
+
+@pytest.mark.asyncio
+async def test_post_safra_proposal(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    expected = ProposalResponseDto(idProposta=321)
+    mock_safra_use_case.post_safra_proposal = AsyncMock(return_value=expected)
+    response = await async_safra_client.post(
+        _SAFRA_PROPOSAL,
+        json=minimal_safra_proposal_payload(),
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()['idProposta'] == expected.idProposta
+    mock_safra_use_case.post_safra_proposal.assert_awaited_once()

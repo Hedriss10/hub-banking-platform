@@ -7,12 +7,15 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.interface.api.v2.controller.safra import SafraController
 from src.interface.api.v2.schemas.safra import MargemBpoInSchema
 from src.interface.api.v2.schemas.safra_credit_ligth_house import (
     CreditLighthouseInSchema,
 )
+from src.interface.api.v2.schemas.safra_proposal import ProposalSchema
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
+from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
@@ -152,3 +155,18 @@ async def test_list_safra_tables_returns_schemas() -> None:
     assert len(out) == 1
     assert out[0].id == 1
     assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_post_safra_proposal_returns_response_schema() -> None:
+    body = ProposalSchema.model_validate(minimal_safra_proposal_payload())
+    dto_out = ProposalResponseDto(idProposta=606)
+    uc = AsyncMock()
+    batch_uc = AsyncMock()
+    uc.post_safra_proposal = AsyncMock(return_value=dto_out)
+    controller = SafraController(uc, batch_uc)
+    out = await controller.post_safra_proposal(body)
+    assert out.idProposta == dto_out.idProposta
+    uc.post_safra_proposal.assert_awaited_once_with(
+        ProposalDto.model_validate(body.model_dump()),
+    )

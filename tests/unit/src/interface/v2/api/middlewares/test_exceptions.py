@@ -161,3 +161,7 @@ class TestRequestValidationExceptionHandler:
         out = sanitize_for_json({'body': b'\x89PNG\r\n\x1a\n'})
         assert isinstance(out['body'], str)
         assert out['body'].startswith('<bytes:')
+
+    def test_sanitize_for_json_exception_in_ctx(self):
+        out = sanitize_for_json({'ctx': {'error': ValueError('falhou')}})
+        assert out['ctx']['error'] == 'falhou'

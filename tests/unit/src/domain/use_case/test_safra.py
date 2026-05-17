@@ -13,8 +13,10 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.use_case.safra import SafraUseCase
+from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
 
 pytestmark = pytest.mark.unit
@@ -148,3 +150,15 @@ async def test_list_safra_tables_delegates_to_service() -> None:
     assert len(out) == 1
     assert out[0].id == 1
     assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_post_safra_proposal_delegates_to_service() -> None:
+    dto_in = ProposalDto.model_validate(minimal_safra_proposal_payload())
+    expected = ProposalResponseDto(idProposta=7)
+    service = AsyncMock()
+    service.post_safra_proposal = AsyncMock(return_value=expected)
+    uc = SafraUseCase(service)
+    out = await uc.post_safra_proposal(dto_in)
+    assert out == expected
+    service.post_safra_proposal.assert_awaited_once_with(dto_in)

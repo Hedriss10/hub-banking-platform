@@ -16,11 +16,16 @@ from src.core.utils.get_from_sequence import get_from_sequence
 
 def sanitize_for_json(obj: object) -> object:
     """
-    Garante que não existam bytes na resposta JSON.
+    Garante que não existam bytes nem exceções na resposta JSON.
 
     O FastAPI tenta serializar bytes como utf-8 por padrão, o que pode quebrar
     quando o payload é binário (ex.: PNG).
+
+    Os erros do Pydantic podem incluir `ctx.error` ou similares com objeto
+    `ValueError`; esses valores não são JSON-serializable sem conversão para str.
     """
+    if isinstance(obj, BaseException):
+        return str(obj)
     if isinstance(obj, bytes):
         return f'<bytes:{len(obj)}>'
     if isinstance(obj, dict):

@@ -10,6 +10,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
     CreditLighthouseResponse,
 )
+from src.domain.dtos.safra_proposal import ProposalDto
 from src.domain.use_case.safra import SafraUseCase
 from src.domain.use_case.safra_batch_search import SafraBatchSearchUseCase
 from src.infrastructure.redis.safra_batch_job_store import job_get, job_save
@@ -33,6 +34,10 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
 )
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
+)
+from src.interface.api.v2.schemas.safra_proposal import (
+    ProposalResponseSchema,
+    ProposalSchema,
 )
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 
@@ -180,3 +185,8 @@ class SafraController:
             SafraTablesOutSchema.model_validate(safra_table.model_dump())
             for safra_table in safra_tables
         ]
+
+    async def post_safra_proposal(self, body: ProposalSchema) -> ProposalResponseSchema:
+        dto = ProposalDto.model_validate(body.model_dump())
+        item = await self._safra_use_case.post_safra_proposal(dto)
+        return ProposalResponseSchema.model_validate(item.model_dump(mode='json'))
