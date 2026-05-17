@@ -202,6 +202,40 @@ async def async_bankers_client(
 
 
 @pytest.fixture
+def mock_rooms_use_case() -> AsyncMock:
+    return AsyncMock()
+
+
+@pytest.fixture
+async def async_rooms_client(
+    v2_test_app: FastAPI,
+    mock_rooms_use_case: AsyncMock,
+) -> AsyncGenerator[AsyncClient, None]:
+    from src.interface.api.v2.controller.rooms import RoomsController
+    from src.interface.api.v2.dependencies.common.auth_employee import (
+        get_current_employee_id,
+    )
+    from src.interface.api.v2.dependencies.rooms import get_rooms_controller
+
+    controller = RoomsController(mock_rooms_use_case)
+
+    async def _override_rooms() -> RoomsController:
+        return controller
+
+    async def _override_employee() -> UUID:
+        return uuid.uuid4()
+
+    v2_test_app.dependency_overrides[get_rooms_controller] = _override_rooms
+    v2_test_app.dependency_overrides[get_current_employee_id] = _override_employee
+
+    async with async_client_for_app(v2_test_app) as client:
+        yield client
+
+    v2_test_app.dependency_overrides.pop(get_rooms_controller, None)
+    v2_test_app.dependency_overrides.pop(get_current_employee_id, None)
+
+
+@pytest.fixture
 def mock_financial_agreements_use_case() -> AsyncMock:
     return AsyncMock()
 
