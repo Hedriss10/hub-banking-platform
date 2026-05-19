@@ -32,6 +32,7 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
     CreditLighthouseInSchema,
     CreditLighthouseOutSchema,
 )
+from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBodySchema
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
@@ -190,3 +191,11 @@ class SafraController:
         dto = ProposalDto.model_validate(body.model_dump())
         item = await self._safra_use_case.post_safra_proposal(dto)
         return ProposalResponseSchema.model_validate(item.model_dump(mode='json'))
+
+    async def get_employing_bodies(
+        self, financial_agreement_id: int
+    ) -> List[SafraEmployingBodySchema]:
+        items = await self._safra_use_case.get_employing_bodies(financial_agreement_id)
+        return [
+            SafraEmployingBodySchema.model_validate(item.model_dump()) for item in items
+        ]

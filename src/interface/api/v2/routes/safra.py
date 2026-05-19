@@ -18,6 +18,7 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
     CreditLighthouseInSchema,
     CreditLighthouseOutSchema,
 )
+from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBodySchema
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
@@ -244,3 +245,18 @@ async def post_safra_proposal(
     _employee_id: CurrentEmployeeIdDep,
 ) -> ProposalResponseSchema:
     return await controller.post_safra_proposal(body)
+
+
+@router.get(
+    '/employing-bodies/{financial_agreement_id}',
+    response_model=List[SafraEmployingBodySchema],
+    status_code=status.HTTP_200_OK,
+    summary='List employing bodies',
+    description='List employing bodies from Safra',
+)
+async def get_safra_employing_bodies(
+    financial_agreement_id: int,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[SafraEmployingBodySchema]:
+    return await controller.get_employing_bodies(financial_agreement_id)

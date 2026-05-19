@@ -11,6 +11,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
     CreditLighthouseResponse,
 )
+from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
@@ -68,3 +69,11 @@ class SafraExternalRepository(SafraRepository):
     ) -> ProposalResponseDto:
         response = await self.api.post_safra_proposal(proposal_dto)
         return ProposalResponseDto.model_validate(response.json())
+
+    async def get_employing_bodies(
+        self, financial_agreement_id: int
+    ) -> List[SafraEmployingBodyDTO]:
+        response = await self.api.get_employing_bodies(financial_agreement_id)
+        payload = response.json()
+        rows = payload if isinstance(payload, list) else [payload]
+        return [SafraEmployingBodyDTO.model_validate(row) for row in rows]
