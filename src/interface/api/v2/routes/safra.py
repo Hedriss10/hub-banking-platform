@@ -22,6 +22,7 @@ from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBody
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
+from src.interface.api.v2.schemas.safra_professions import SafraProfessionsSchema
 from src.interface.api.v2.schemas.safra_proposal import (
     ProposalResponseSchema,
     ProposalSchema,
@@ -260,3 +261,18 @@ async def get_safra_employing_bodies(
     _employee_id: CurrentEmployeeIdDep,
 ) -> List[SafraEmployingBodySchema]:
     return await controller.get_employing_bodies(financial_agreement_id)
+
+
+@router.get(
+    '/professions/{financial_agreement_id}',
+    response_model=List[SafraProfessionsSchema],
+    status_code=status.HTTP_200_OK,
+    summary='List professions',
+    description='List professions from Safra',
+)
+async def get_safra_professions(
+    financial_agreement_id: int,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[SafraProfessionsSchema]:
+    return await controller.get_professions(financial_agreement_id)

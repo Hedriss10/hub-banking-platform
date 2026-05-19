@@ -36,6 +36,7 @@ from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBody
 from src.interface.api.v2.schemas.safra_financial_agreements import (
     FinancialAgreementOutSchema,
 )
+from src.interface.api.v2.schemas.safra_professions import SafraProfessionsSchema
 from src.interface.api.v2.schemas.safra_proposal import (
     ProposalResponseSchema,
     ProposalSchema,
@@ -198,4 +199,12 @@ class SafraController:
         items = await self._safra_use_case.get_employing_bodies(financial_agreement_id)
         return [
             SafraEmployingBodySchema.model_validate(item.model_dump()) for item in items
+        ]
+
+    async def get_professions(
+        self, financial_agreement_id: int
+    ) -> List[SafraProfessionsSchema]:
+        items = await self._safra_use_case.get_professions(financial_agreement_id)
+        return [
+            SafraProfessionsSchema.model_validate(item.model_dump()) for item in items
         ]

@@ -10,6 +10,7 @@ from src.domain.dtos.safra_financial_agreements import FinancialAgreementRespons
 from src.domain.dtos.safra_proposal import ProposalResponseDto
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
 from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBodySchema
+from src.interface.api.v2.schemas.safra_professions import SafraProfessionsSchema
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 from starlette import status
 from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
@@ -30,6 +31,7 @@ _SAFRA_CREDIT_LIGHTHOUSE = '/api/v2/safra/credit-lighthouse'
 _SAFRA_TABLES = '/api/v2/safra/tables/{convenio_id}'
 _SAFRA_PROPOSAL = '/api/v2/safra/proposal'
 _SAFRA_EMPLOYING_BODIES = '/api/v2/safra/employing-bodies/{financial_agreement_id}'
+_SAFRA_PROFESSIONS = '/api/v2/safra/professions/{financial_agreement_id}'
 
 _MARGEM_OUT = MargemBpoOutputDto(
     cpf='01437872506',
@@ -452,3 +454,25 @@ async def test_get_safra_employing_bodies(
     assert data[0]['id'] == 1
     assert data[0]['descricao'] == 'Descrição'
     mock_safra_use_case.get_employing_bodies.assert_awaited_once_with(1)
+
+
+async def test_get_safra_professions(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    professions = [
+        SafraProfessionsSchema(
+            idProfissao=1,
+            descricao='Descrição',
+        )
+    ]
+    mock_safra_use_case.get_professions = AsyncMock(return_value=professions)
+    response = await async_safra_client.get(
+        _SAFRA_PROFESSIONS.format(financial_agreement_id=1)
+    )
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]['idProfissao'] == 1
+    assert data[0]['descricao'] == 'Descrição'
+    mock_safra_use_case.get_professions.assert_awaited_once_with(1)

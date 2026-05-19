@@ -19,6 +19,7 @@ URL_CREDIT_LIGHTHOUSE = '/api/v1/FarolCredito'
 URL_LIST_SAFRA_TABLES = '/api/v1/TabelaJuros'
 URL_PROPOSAL = '/api/v1/Propostas/Novo'
 URL_EMPLOYING_BODIES = '/api/v1/OrgaoEmpregador'
+URL_PROFESSIONS = '/api/v1/Profissao'
 
 
 class SafraApi(ApiBaseClient):
@@ -115,5 +116,14 @@ class SafraApi(ApiBaseClient):
         return await self.request({
             'method': 'GET',
             'url': f'{URL_EMPLOYING_BODIES}/{financial_agreement_id}',
+            'headers': {'Authorization': f'Bearer {access_token}'},
+        })
+
+    async def get_professions(self, financial_agreement_id: int) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'GET',
+            'url': f'{URL_PROFESSIONS}/{financial_agreement_id}',
             'headers': {'Authorization': f'Bearer {access_token}'},
         })

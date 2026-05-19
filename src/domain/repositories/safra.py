@@ -13,6 +13,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 
@@ -49,3 +50,8 @@ class SafraRepository(ABC):
     async def get_employing_bodies(
         self, financial_agreement_id: int
     ) -> List[SafraEmployingBodyDTO]: ...
+
+    @abstractmethod
+    async def get_professions(
+        self, financial_agreement_id: int
+    ) -> List[SafraProfessionsDTO]: ...
