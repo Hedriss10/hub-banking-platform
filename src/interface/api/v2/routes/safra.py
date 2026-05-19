@@ -5,6 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Response, UploadFile, stat
 
 from src.interface.api.v2.dependencies.common.auth_employee import CurrentEmployeeIdDep
 from src.interface.api.v2.dependencies.safra import SafraControllerDep
+from src.interface.api.v2.schemas.employee_situation import EmployeeSituationSchema
 from src.interface.api.v2.schemas.safra import (
     BankerOutSchema,
     MargemBpoInSchema,
@@ -292,3 +293,21 @@ async def get_safra_legal_regime(
     _employee_id: CurrentEmployeeIdDep,
 ) -> List[SafraRegimeLegalSchema]:
     return await controller.get_legal_regime(financial_agreement_id)
+
+
+@router.get(
+    '/employee-situation/{financial_agreement_id}/{legal_regime_id}',
+    response_model=List[EmployeeSituationSchema],
+    status_code=status.HTTP_200_OK,
+    summary='List employee situation',
+    description='List employee situation from Safra',
+)
+async def get_safra_employee_situation(
+    financial_agreement_id: int,
+    legal_regime_id: int,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[EmployeeSituationSchema]:
+    return await controller.get_employee_situation(
+        financial_agreement_id, legal_regime_id
+    )

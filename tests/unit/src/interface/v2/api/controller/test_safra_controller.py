@@ -9,6 +9,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.interface.api.v2.controller.safra import SafraController
+from src.interface.api.v2.schemas.employee_situation import EmployeeSituationSchema
 from src.interface.api.v2.schemas.safra import MargemBpoInSchema
 from src.interface.api.v2.schemas.safra_credit_ligth_house import (
     CreditLighthouseInSchema,
@@ -224,6 +225,24 @@ async def test_get_legal_regime_returns_schemas() -> None:
     uc.get_legal_regime = AsyncMock(return_value=legal_regime)
     controller = SafraController(uc, batch_uc)
     out = await controller.get_legal_regime(1)
+    assert len(out) == 1
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_get_employee_situation_returns_schemas() -> None:
+    employee_situation = [
+        EmployeeSituationSchema(
+            id=1,
+            descricao='Descrição',
+        )
+    ]
+    uc = AsyncMock()
+    batch_uc = AsyncMock()
+    uc.get_employee_situation = AsyncMock(return_value=employee_situation)
+    controller = SafraController(uc, batch_uc)
+    out = await controller.get_employee_situation(1, 1)
     assert len(out) == 1
     assert out[0].id == 1
     assert out[0].descricao == 'Descrição'

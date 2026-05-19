@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from src.domain.dtos.employee_situation import EmployeeSituationDTO
 from src.domain.dtos.safra import (
     BankerResponse,
     MargemBpoDto,
@@ -61,3 +62,8 @@ class SafraRepository(ABC):
     async def get_legal_regime(
         self, financial_agreement_id: int
     ) -> List[LegalRegimeDTO]: ...
+
+    @abstractmethod
+    async def get_employee_situation(
+        self, financial_agreement_id: int, legal_regime_id: int
+    ) -> List[EmployeeSituationDTO]: ...

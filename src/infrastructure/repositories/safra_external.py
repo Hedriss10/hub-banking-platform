@@ -1,6 +1,7 @@
 from typing import List
 
 from src.core.config.settings import get_settings
+from src.domain.dtos.employee_situation import EmployeeSituationDTO
 from src.domain.dtos.safra import (
     BankerResponse,
     MargemBpoDto,
@@ -95,3 +96,13 @@ class SafraExternalRepository(SafraRepository):
         payload = response.json()
         rows = payload if isinstance(payload, list) else [payload]
         return [LegalRegimeDTO.model_validate(row) for row in rows]
+
+    async def get_employee_situation(
+        self, financial_agreement_id: int, legal_regime_id: int
+    ) -> List[EmployeeSituationDTO]:
+        response = await self.api.get_employee_situation(
+            financial_agreement_id, legal_regime_id
+        )
+        payload = response.json()
+        rows = payload if isinstance(payload, list) else [payload]
+        return [EmployeeSituationDTO.model_validate(row) for row in rows]

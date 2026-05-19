@@ -1,5 +1,6 @@
 from typing import List
 
+from src.domain.dtos.employee_situation import EmployeeSituationDTO
 from src.domain.dtos.safra import (
     BankerResponse,
     MargemBpoDto,
@@ -62,3 +63,10 @@ class SafraUseCase:
         self, financial_agreement_id: int
     ) -> List[LegalRegimeDTO]:
         return await self._safra_service.get_legal_regime(financial_agreement_id)
+
+    async def get_employee_situation(
+        self, financial_agreement_id: int, legal_regime_id: int
+    ) -> List[EmployeeSituationDTO]:
+        return await self._safra_service.get_employee_situation(
+            financial_agreement_id, legal_regime_id
+        )

@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
+from src.domain.dtos.employee_situation import EmployeeSituationDTO
 from src.domain.dtos.safra import (
     BankerResponse,
     MargemBpoDto,
@@ -419,5 +420,23 @@ async def test_get_legal_regime_maps_response_json() -> None:
     out = await repo.get_legal_regime(1)
     assert len(out) == 1
     assert isinstance(out[0], LegalRegimeDTO)
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_get_employee_situation_maps_response_json() -> None:
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'id': 1,
+            'descricao': 'Descrição',
+        }
+    ]
+    repo.api.get_employee_situation = AsyncMock(return_value=mock_resp)
+    out = await repo.get_employee_situation(1, 1)
+    assert len(out) == 1
+    assert isinstance(out[0], EmployeeSituationDTO)
     assert out[0].id == 1
     assert out[0].descricao == 'Descrição'
