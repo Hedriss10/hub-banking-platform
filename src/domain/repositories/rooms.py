@@ -3,6 +3,11 @@ from typing import List, Optional
 from uuid import UUID
 
 from src.domain.dtos.rooms import RoomCreateDTO, RoomDTO, RoomUpdateDTO
+from src.domain.dtos.rooms_employee import (
+    RoomEmployeeCreateDTO,
+    RoomEmployeeDTO,
+    RoomEmployeeListDTO,
+)
 
 
 class RoomRepository(ABC):
@@ -22,3 +27,14 @@ class RoomRepository(ABC):
 
     @abstractmethod
     async def delete_room(self, room_id: UUID) -> None: ...
+
+    @abstractmethod
+    async def create_room_employee(
+        self, room_employee: RoomEmployeeCreateDTO
+    ) -> RoomEmployeeDTO: ...
+
+    @abstractmethod
+    async def get_room_employees(self, room_id: UUID) -> List[RoomEmployeeListDTO]: ...
+
+    @abstractmethod
+    async def delete_room_employee(self, room_id: UUID, employee_id: UUID) -> None: ...

@@ -7,8 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exceptions.custom import DatabaseException, DuplicatedException
 from src.domain.dtos.rooms import RoomCreateDTO, RoomDTO, RoomUpdateDTO
+from src.domain.dtos.rooms_employee import (
+    RoomEmployeeCreateDTO,
+    RoomEmployeeDTO,
+    RoomEmployeeListDTO,
+)
 from src.domain.repositories.rooms import RoomRepository
+from src.infrastructure.database.models.employee import Employee
 from src.infrastructure.database.models.rooms import RoomsModel
+from src.infrastructure.database.models.rooms_employee import RoomsEmployee
 from src.infrastructure.database.utils.status_code import is_unique_violation
 
 
@@ -97,6 +104,69 @@ class RoomsPostgresRepository(RoomRepository):
                 update(RoomsModel)
                 .where(RoomsModel.id.__eq__(room_id))
                 .where(RoomsModel.is_deleted.is_(False))
+                .values(is_deleted=True)
+            )
+            result = await self.session.execute(stmt)
+            if result.rowcount == 0:
+                await self.session.rollback()
+                return
+            await self.session.commit()
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
+
+    async def create_room_employee(
+        self, room_employee: RoomEmployeeCreateDTO
+    ) -> RoomEmployeeDTO:
+        try:
+            row = RoomsEmployee(
+                room_id=room_employee.room_id,
+                employee_id=room_employee.employee_id,
+            )
+            self.session.add(row)
+            await self.session.commit()
+            await self.session.refresh(row)
+            return RoomEmployeeDTO.model_validate(row)
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
+
+    async def get_room_employees(self, room_id: UUID) -> List[RoomEmployeeListDTO]:
+        try:
+            stmt = (
+                select(
+                    RoomsEmployee,
+                    Employee.first_name,
+                    Employee.last_name,
+                )
+                .join(Employee, Employee.id.__eq__(RoomsEmployee.employee_id))
+                .where(RoomsEmployee.room_id.__eq__(room_id))
+                .where(RoomsEmployee.is_deleted.is_(False))
+                .where(Employee.is_deleted.is_(False))
+            )
+            result = await self.session.execute(stmt)
+            rows = result.all()
+            return [
+                RoomEmployeeListDTO(
+                    id=rooms_employee.id,
+                    room_id=rooms_employee.room_id,
+                    employee_id=rooms_employee.employee_id,
+                    first_name=first_name,
+                    last_name=last_name,
+                )
+                for rooms_employee, first_name, last_name in rows
+            ]
+        except SQLAlchemyError as error:
+            await self.session.rollback()
+            raise DatabaseException(str(error)) from error
+
+    async def delete_room_employee(self, room_id: UUID, employee_id: UUID) -> None:
+        try:
+            stmt = (
+                update(RoomsEmployee)
+                .where(RoomsEmployee.room_id.__eq__(room_id))
+                .where(RoomsEmployee.employee_id.__eq__(employee_id))
+                .where(RoomsEmployee.is_deleted.is_(False))
                 .values(is_deleted=True)
             )
             result = await self.session.execute(stmt)

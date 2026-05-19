@@ -3,6 +3,11 @@ from uuid import UUID
 
 from src.core.exceptions.custom import DuplicatedException
 from src.domain.dtos.rooms import RoomCreateDTO, RoomDTO, RoomUpdateDTO
+from src.domain.dtos.rooms_employee import (
+    RoomEmployeeCreateDTO,
+    RoomEmployeeDTO,
+    RoomEmployeeListDTO,
+)
 from src.domain.exceptions.rooms import (
     RoomAlreadyExistsException,
     RoomNotFoundException,
@@ -54,3 +59,29 @@ class RoomsUseCase:
 
     async def get_all_rooms(self) -> List[RoomDTO]:
         return await self.room_service.get_all_rooms()
+
+    async def create_room_employee(
+        self, room_employee: RoomEmployeeCreateDTO
+    ) -> RoomEmployeeDTO:
+        existing = await self.room_service.get_room_by_id(room_employee.room_id)
+        if not existing:
+            raise RoomNotFoundException(
+                message=f'Room with id {room_employee.room_id} not found',
+            )
+        return await self.room_service.create_room_employee(room_employee)
+
+    async def get_room_employees(self, room_id: UUID) -> List[RoomEmployeeListDTO]:
+        existing = await self.room_service.get_room_by_id(room_id)
+        if not existing:
+            raise RoomNotFoundException(
+                message=f'Room with id {room_id} not found',
+            )
+        return await self.room_service.get_room_employees(room_id)
+
+    async def delete_room_employee(self, room_id: UUID, employee_id: UUID) -> None:
+        existing = await self.room_service.get_room_by_id(room_id)
+        if not existing:
+            raise RoomNotFoundException(
+                message=f'Room with id {room_id} not found',
+            )
+        await self.room_service.delete_room_employee(room_id, employee_id)

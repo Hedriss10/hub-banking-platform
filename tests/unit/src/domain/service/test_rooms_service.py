@@ -3,8 +3,13 @@ from uuid import uuid4
 
 import pytest
 from src.domain.dtos.rooms import RoomCreateDTO, RoomUpdateDTO
+from src.domain.dtos.rooms_employee import RoomEmployeeCreateDTO
 from src.domain.service.rooms import RoomsService
-from tests.fixtures.room_factories import build_room_dto
+from tests.fixtures.room_factories import (
+    build_room_dto,
+    build_room_employee_dto,
+    build_room_employee_list_dto,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -69,3 +74,43 @@ async def test_delete_room_delegates() -> None:
     await service.delete_room(rid)
 
     repo.delete_room.assert_awaited_once_with(rid)
+
+
+@pytest.mark.asyncio
+async def test_create_room_employee_delegates() -> None:
+    dto = RoomEmployeeCreateDTO(room_id=uuid4(), employee_id=uuid4())
+    out = build_room_employee_dto(
+        room_id=dto.room_id,
+        employee_id=dto.employee_id,
+    )
+    repo = AsyncMock()
+    repo.create_room_employee = AsyncMock(return_value=out)
+    service = RoomsService(repo)
+
+    assert await service.create_room_employee(dto) == out
+    repo.create_room_employee.assert_awaited_once_with(dto)
+
+
+@pytest.mark.asyncio
+async def test_get_room_employees_delegates() -> None:
+    rid = uuid4()
+    items = [build_room_employee_list_dto(room_id=rid)]
+    repo = AsyncMock()
+    repo.get_room_employees = AsyncMock(return_value=items)
+    service = RoomsService(repo)
+
+    assert await service.get_room_employees(rid) == items
+    repo.get_room_employees.assert_awaited_once_with(rid)
+
+
+@pytest.mark.asyncio
+async def test_delete_room_employee_delegates() -> None:
+    rid = uuid4()
+    eid = uuid4()
+    repo = AsyncMock()
+    repo.delete_room_employee = AsyncMock(return_value=None)
+    service = RoomsService(repo)
+
+    await service.delete_room_employee(rid, eid)
+
+    repo.delete_room_employee.assert_awaited_once_with(rid, eid)

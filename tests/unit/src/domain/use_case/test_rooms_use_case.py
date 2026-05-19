@@ -4,12 +4,17 @@ from uuid import uuid4
 import pytest
 from src.core.exceptions.custom import DuplicatedException
 from src.domain.dtos.rooms import RoomCreateDTO, RoomUpdateDTO
+from src.domain.dtos.rooms_employee import RoomEmployeeCreateDTO
 from src.domain.exceptions.rooms import (
     RoomAlreadyExistsException,
     RoomNotFoundException,
 )
 from src.domain.use_case.rooms import RoomsUseCase
-from tests.fixtures.room_factories import build_room_dto
+from tests.fixtures.room_factories import (
+    build_room_dto,
+    build_room_employee_dto,
+    build_room_employee_list_dto,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -137,3 +142,76 @@ async def test_delete_room_not_found() -> None:
 
     with pytest.raises(RoomNotFoundException):
         await uc.delete_room(rid)
+
+
+@pytest.mark.asyncio
+async def test_create_room_employee_success() -> None:
+    room = build_room_dto()
+    dto = RoomEmployeeCreateDTO(room_id=room.id, employee_id=uuid4())
+    created = build_room_employee_dto(room_id=room.id, employee_id=dto.employee_id)
+    service = AsyncMock()
+    service.get_room_by_id = AsyncMock(return_value=room)
+    service.create_room_employee = AsyncMock(return_value=created)
+    uc = RoomsUseCase(service)
+
+    assert await uc.create_room_employee(dto) == created
+    service.create_room_employee.assert_awaited_once_with(dto)
+
+
+@pytest.mark.asyncio
+async def test_create_room_employee_room_not_found() -> None:
+    dto = RoomEmployeeCreateDTO(room_id=uuid4(), employee_id=uuid4())
+    service = AsyncMock()
+    service.get_room_by_id = AsyncMock(return_value=None)
+    uc = RoomsUseCase(service)
+
+    with pytest.raises(RoomNotFoundException):
+        await uc.create_room_employee(dto)
+
+
+@pytest.mark.asyncio
+async def test_get_room_employees_success() -> None:
+    room = build_room_dto()
+    items = [build_room_employee_list_dto(room_id=room.id)]
+    service = AsyncMock()
+    service.get_room_by_id = AsyncMock(return_value=room)
+    service.get_room_employees = AsyncMock(return_value=items)
+    uc = RoomsUseCase(service)
+
+    assert await uc.get_room_employees(room.id) == items
+
+
+@pytest.mark.asyncio
+async def test_get_room_employees_room_not_found() -> None:
+    rid = uuid4()
+    service = AsyncMock()
+    service.get_room_by_id = AsyncMock(return_value=None)
+    uc = RoomsUseCase(service)
+
+    with pytest.raises(RoomNotFoundException):
+        await uc.get_room_employees(rid)
+
+
+@pytest.mark.asyncio
+async def test_delete_room_employee_success() -> None:
+    room = build_room_dto()
+    eid = uuid4()
+    service = AsyncMock()
+    service.get_room_by_id = AsyncMock(return_value=room)
+    service.delete_room_employee = AsyncMock(return_value=None)
+    uc = RoomsUseCase(service)
+
+    await uc.delete_room_employee(room.id, eid)
+
+    service.delete_room_employee.assert_awaited_once_with(room.id, eid)
+
+
+@pytest.mark.asyncio
+async def test_delete_room_employee_room_not_found() -> None:
+    rid = uuid4()
+    service = AsyncMock()
+    service.get_room_by_id = AsyncMock(return_value=None)
+    uc = RoomsUseCase(service)
+
+    with pytest.raises(RoomNotFoundException):
+        await uc.delete_room_employee(rid, uuid4())
