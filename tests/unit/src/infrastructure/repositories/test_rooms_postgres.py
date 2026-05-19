@@ -6,8 +6,9 @@ import src.infrastructure.repositories.rooms_postgres as rooms_postgres_mod
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from src.core.exceptions.custom import DatabaseException, DuplicatedException
 from src.domain.dtos.rooms import RoomCreateDTO, RoomUpdateDTO
+from src.domain.dtos.rooms_employee import RoomEmployeeCreateDTO
 from src.infrastructure.repositories.rooms_postgres import RoomsPostgresRepository
-from tests.fixtures.room_factories import build_room_dto
+from tests.fixtures.room_factories import build_room_dto, build_room_employee_dto
 
 pytestmark = pytest.mark.unit
 
@@ -51,6 +52,12 @@ def _mock_result_with_scalars_all(rows: list) -> MagicMock:
 def _mock_execute_result_with_rowcount(n: int) -> MagicMock:
     result = MagicMock()
     result.rowcount = n
+    return result
+
+
+def _mock_result_with_all(rows: list) -> MagicMock:
+    result = MagicMock()
+    result.all = MagicMock(return_value=rows)
     return result
 
 
@@ -294,4 +301,120 @@ async def test_delete_room_sqlalchemy_error(
     mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('x'))
     with pytest.raises(DatabaseException):
         await repository.delete_room(uuid4())
+    mock_session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_room_employee_success(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dto = RoomEmployeeCreateDTO(room_id=uuid4(), employee_id=uuid4())
+    out_dto = build_room_employee_dto(
+        room_id=dto.room_id,
+        employee_id=dto.employee_id,
+    )
+    mock_session.commit = AsyncMock()
+    mock_session.refresh = AsyncMock()
+    mock_session.add = MagicMock()
+    monkeypatch.setattr(
+        rooms_postgres_mod.RoomEmployeeDTO,
+        'model_validate',
+        classmethod(lambda _cls, _o: out_dto),
+    )
+
+    out = await repository.create_room_employee(dto)
+
+    assert out == out_dto
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+    mock_session.refresh.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_room_employee_sqlalchemy_error(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    dto = RoomEmployeeCreateDTO(room_id=uuid4(), employee_id=uuid4())
+    mock_session.commit = AsyncMock(side_effect=SQLAlchemyError('db'))
+    mock_session.add = MagicMock()
+
+    with pytest.raises(DatabaseException):
+        await repository.create_room_employee(dto)
+
+    mock_session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_room_employees_success(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    rooms_employee = MagicMock()
+    rooms_employee.id = uuid4()
+    rooms_employee.room_id = uuid4()
+    rooms_employee.employee_id = uuid4()
+    mock_session.execute = AsyncMock(
+        return_value=_mock_result_with_all([(rooms_employee, 'Maria', 'Silva')]),
+    )
+
+    out = await repository.get_room_employees(rooms_employee.room_id)
+
+    assert len(out) == 1
+    assert out[0].first_name == 'Maria'
+    assert out[0].last_name == 'Silva'
+    assert out[0].employee_id == rooms_employee.employee_id
+
+
+@pytest.mark.asyncio
+async def test_get_room_employees_sqlalchemy_error(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('db'))
+
+    with pytest.raises(DatabaseException):
+        await repository.get_room_employees(uuid4())
+
+    mock_session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_room_employee_commits_when_rows(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(return_value=_mock_execute_result_with_rowcount(1))
+    mock_session.commit = AsyncMock()
+
+    await repository.delete_room_employee(uuid4(), uuid4())
+
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_room_employee_rollbacks_when_zero_rows(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(return_value=_mock_execute_result_with_rowcount(0))
+
+    await repository.delete_room_employee(uuid4(), uuid4())
+
+    mock_session.rollback.assert_awaited_once()
+    mock_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_delete_room_employee_sqlalchemy_error(
+    repository: RoomsPostgresRepository,
+    mock_session: AsyncMock,
+) -> None:
+    mock_session.execute = AsyncMock(side_effect=SQLAlchemyError('x'))
+
+    with pytest.raises(DatabaseException):
+        await repository.delete_room_employee(uuid4(), uuid4())
+
     mock_session.rollback.assert_awaited_once()

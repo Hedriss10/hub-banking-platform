@@ -29,3 +29,21 @@ class RoomOutSchema(BaseModel):
     created_at: datetime
     updated_at: datetime
     is_deleted: bool
+
+
+class RoomEmployeeCreateSchema(BaseModel):
+    employee_id: UUID
+
+
+class RoomEmployeeOutSchema(BaseModel):
+    id: UUID
+    room_id: UUID
+    employee_id: UUID
+
+
+class RoomEmployeeListItemSchema(BaseModel):
+    id: UUID
+    room_id: UUID
+    employee_id: UUID
+    first_name: str
+    last_name: str
