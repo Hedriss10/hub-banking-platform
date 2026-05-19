@@ -27,6 +27,7 @@ from src.interface.api.v2.schemas.safra_proposal import (
     ProposalResponseSchema,
     ProposalSchema,
 )
+from src.interface.api.v2.schemas.safra_regime_legal import SafraRegimeLegalSchema
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 
 tags_metadata = {
@@ -276,3 +277,18 @@ async def get_safra_professions(
     _employee_id: CurrentEmployeeIdDep,
 ) -> List[SafraProfessionsSchema]:
     return await controller.get_professions(financial_agreement_id)
+
+
+@router.get(
+    '/legal-regime/{financial_agreement_id}',
+    response_model=List[SafraRegimeLegalSchema],
+    status_code=status.HTTP_200_OK,
+    summary='List legal regime',
+    description='List legal regime from Safra',
+)
+async def get_safra_legal_regime(
+    financial_agreement_id: int,
+    controller: SafraControllerDep,
+    _employee_id: CurrentEmployeeIdDep,
+) -> List[SafraRegimeLegalSchema]:
+    return await controller.get_legal_regime(financial_agreement_id)

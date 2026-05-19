@@ -41,6 +41,7 @@ from src.interface.api.v2.schemas.safra_proposal import (
     ProposalResponseSchema,
     ProposalSchema,
 )
+from src.interface.api.v2.schemas.safra_regime_legal import SafraRegimeLegalSchema
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 
 
@@ -207,4 +208,12 @@ class SafraController:
         items = await self._safra_use_case.get_professions(financial_agreement_id)
         return [
             SafraProfessionsSchema.model_validate(item.model_dump()) for item in items
+        ]
+
+    async def get_legal_regime(
+        self, financial_agreement_id: int
+    ) -> List[SafraRegimeLegalSchema]:
+        items = await self._safra_use_case.get_legal_regime(financial_agreement_id)
+        return [
+            SafraRegimeLegalSchema.model_validate(item.model_dump()) for item in items
         ]
