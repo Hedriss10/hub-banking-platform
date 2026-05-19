@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
+from src.domain.dtos.employee_situation import EmployeeSituationDTO
 from src.domain.dtos.safra import (
     BankerResponse,
     MargemBpoDto,
@@ -210,3 +211,22 @@ async def test_get_legal_regime_delegates_to_service() -> None:
     uc = SafraUseCase(service)
     out = await uc.get_legal_regime(1)
     assert out == legal_regime
+
+
+@pytest.mark.asyncio
+async def test_get_employee_situation_delegates_to_service() -> None:
+    employee_situation = [
+        EmployeeSituationDTO(
+            id=1,
+            descricao='Descrição',
+        )
+    ]
+    service = AsyncMock()
+    service.get_employee_situation = AsyncMock(return_value=employee_situation)
+    uc = SafraUseCase(service)
+    out = await uc.get_employee_situation(1, 1)
+    assert out == employee_situation
+    service.get_employee_situation.assert_awaited_once_with(1, 1)
+    assert len(out) == 1
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'

@@ -21,6 +21,7 @@ URL_PROPOSAL = '/api/v1/Propostas/Novo'
 URL_EMPLOYING_BODIES = '/api/v1/OrgaoEmpregador'
 URL_PROFESSIONS = '/api/v1/Profissao'
 URL_LEGAL_REGIME = '/api/v1/RegimeJuridico'
+URL_EMPLOYEE_SITUATION = '/api/v1/SituacaoEmpregado'
 
 
 class SafraApi(ApiBaseClient):
@@ -135,5 +136,18 @@ class SafraApi(ApiBaseClient):
         return await self.request({
             'method': 'GET',
             'url': f'{URL_LEGAL_REGIME}/{financial_agreement_id}',
+            'headers': {'Authorization': f'Bearer {access_token}'},
+        })
+
+    async def get_employee_situation(
+        self, financial_agreement_id: int, legal_regime_id: int
+    ) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'GET',
+            'url': (
+                f'{URL_EMPLOYEE_SITUATION}/{financial_agreement_id}/{legal_regime_id}'
+            ),
             'headers': {'Authorization': f'Bearer {access_token}'},
         })

@@ -9,6 +9,7 @@ from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseResponse
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.dtos.safra_proposal import ProposalResponseDto
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
+from src.interface.api.v2.schemas.employee_situation import EmployeeSituationSchema
 from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBodySchema
 from src.interface.api.v2.schemas.safra_professions import SafraProfessionsSchema
 from src.interface.api.v2.schemas.safra_regime_legal import SafraRegimeLegalSchema
@@ -34,6 +35,9 @@ _SAFRA_PROPOSAL = '/api/v2/safra/proposal'
 _SAFRA_EMPLOYING_BODIES = '/api/v2/safra/employing-bodies/{financial_agreement_id}'
 _SAFRA_PROFESSIONS = '/api/v2/safra/professions/{financial_agreement_id}'
 _SAFRA_LEGAL_REGIME = '/api/v2/safra/legal-regime/{financial_agreement_id}'
+_SAFRA_EMPLOYEE_SITUATION = (
+    '/api/v2/safra/employee-situation/{financial_agreement_id}/{legal_regime_id}'
+)
 
 _MARGEM_OUT = MargemBpoOutputDto(
     cpf='01437872506',
@@ -501,3 +505,27 @@ async def test_get_safra_legal_regime(
     assert data[0]['id'] == 1
     assert data[0]['descricao'] == 'Descrição'
     mock_safra_use_case.get_legal_regime.assert_awaited_once_with(1)
+
+
+async def test_get_safra_employee_situation(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    employee_situation = [
+        EmployeeSituationSchema(
+            id=1,
+            descricao='Descrição',
+        )
+    ]
+    mock_safra_use_case.get_employee_situation = AsyncMock(
+        return_value=employee_situation
+    )
+    response = await async_safra_client.get(
+        _SAFRA_EMPLOYEE_SITUATION.format(financial_agreement_id=1, legal_regime_id=1)
+    )
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]['id'] == 1
+    assert data[0]['descricao'] == 'Descrição'
+    mock_safra_use_case.get_employee_situation.assert_awaited_once_with(1, 1)

@@ -19,6 +19,7 @@ from src.infrastructure.utils.safra_batch_export_csv import (
 )
 from src.infrastructure.workers.processing_batch_safra import run_safra_batch_job
 from src.infrastructure.workers.safra_batch_csv import parse_safra_batch_csv
+from src.interface.api.v2.schemas.employee_situation import EmployeeSituationSchema
 from src.interface.api.v2.schemas.safra import (
     BankerOutSchema,
     MargemBpoInSchema,
@@ -216,4 +217,14 @@ class SafraController:
         items = await self._safra_use_case.get_legal_regime(financial_agreement_id)
         return [
             SafraRegimeLegalSchema.model_validate(item.model_dump()) for item in items
+        ]
+
+    async def get_employee_situation(
+        self, financial_agreement_id: int, legal_regime_id: int
+    ) -> List[EmployeeSituationSchema]:
+        items = await self._safra_use_case.get_employee_situation(
+            financial_agreement_id, legal_regime_id
+        )
+        return [
+            EmployeeSituationSchema.model_validate(item.model_dump()) for item in items
         ]
