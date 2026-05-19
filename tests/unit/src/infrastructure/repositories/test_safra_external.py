@@ -12,6 +12,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
     CreditLighthouseResponse,
 )
+from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
@@ -360,3 +361,23 @@ async def test_post_safra_proposal_maps_json() -> None:
     assert isinstance(out, ProposalResponseDto)
     assert out.idProposta == _REPOSITORY_PROPOSTA_STUB_ID
     repo.api.post_safra_proposal.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_get_employing_bodies_maps_response_json() -> None:
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'id': 1,
+            'descricao': 'Descrição',
+        }
+    ]
+    repo.api.get_employing_bodies = AsyncMock(return_value=mock_resp)
+
+    out = await repo.get_employing_bodies(1)
+
+    assert len(out) == 1
+    assert isinstance(out[0], SafraEmployingBodyDTO)
+    assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'

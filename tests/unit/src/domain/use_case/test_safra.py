@@ -12,6 +12,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
     CreditLighthouseResponse,
 )
+from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
@@ -162,3 +163,18 @@ async def test_post_safra_proposal_delegates_to_service() -> None:
     out = await uc.post_safra_proposal(dto_in)
     assert out == expected
     service.post_safra_proposal.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_get_employing_bodies_delegates_to_service() -> None:
+    employing_bodies = [
+        SafraEmployingBodyDTO(
+            id=1,
+            descricao='Descrição',
+        )
+    ]
+    service = AsyncMock()
+    service.get_employing_bodies = AsyncMock(return_value=employing_bodies)
+    uc = SafraUseCase(service)
+    out = await uc.get_employing_bodies(1)
+    assert out == employing_bodies

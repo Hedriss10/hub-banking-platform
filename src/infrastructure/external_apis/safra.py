@@ -18,6 +18,7 @@ URL_FINANCIAL_AGREEMENTS = '/api/v1/Convenio'
 URL_CREDIT_LIGHTHOUSE = '/api/v1/FarolCredito'
 URL_LIST_SAFRA_TABLES = '/api/v1/TabelaJuros'
 URL_PROPOSAL = '/api/v1/Propostas/Novo'
+URL_EMPLOYING_BODIES = '/api/v1/OrgaoEmpregador'
 
 
 class SafraApi(ApiBaseClient):
@@ -106,4 +107,13 @@ class SafraApi(ApiBaseClient):
             'url': URL_PROPOSAL,
             'headers': {'Authorization': f'Bearer {access_token}'},
             'json': proposal_dto.model_dump(),
+        })
+
+    async def get_employing_bodies(self, financial_agreement_id: int) -> httpx.Response:
+        token_response = await self.get_token()
+        access_token = self._access_token_from(token_response)
+        return await self.request({
+            'method': 'GET',
+            'url': f'{URL_EMPLOYING_BODIES}/{financial_agreement_id}',
+            'headers': {'Authorization': f'Bearer {access_token}'},
         })
