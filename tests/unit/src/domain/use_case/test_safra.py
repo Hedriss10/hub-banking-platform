@@ -14,6 +14,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_legal_regime import LegalRegimeDTO
 from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
@@ -194,3 +195,18 @@ async def test_get_professions_delegates_to_service() -> None:
     uc = SafraUseCase(service)
     out = await uc.get_professions(1)
     assert out == professions
+
+
+@pytest.mark.asyncio
+async def test_get_legal_regime_delegates_to_service() -> None:
+    legal_regime = [
+        LegalRegimeDTO(
+            id=1,
+            descricao='Descrição',
+        )
+    ]
+    service = AsyncMock()
+    service.get_legal_regime = AsyncMock(return_value=legal_regime)
+    uc = SafraUseCase(service)
+    out = await uc.get_legal_regime(1)
+    assert out == legal_regime

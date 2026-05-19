@@ -311,3 +311,32 @@ async def test_get_professions_uses_bearer_from_token(safra_api: SafraApi) -> No
     second_call = mock_req.await_args_list[1][0][0]
     assert second_call['headers']['Authorization'] == 'Bearer abc'
     assert second_call['url'] == '/api/v1/Profissao/1'
+
+
+@pytest.mark.asyncio
+async def test_get_legal_regime_uses_bearer_from_token(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    legal_regime_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/RegimeJuridico'),
+        json=[],
+    )
+    urls: list[str] = []
+
+    async def _req(data: dict):
+        urls.append(data['url'])
+        if data['method'] == 'POST':
+            return token_resp
+        return legal_regime_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.get_legal_regime(1)
+    assert out.json() == []
+    second_call = mock_req.await_args_list[1][0][0]
+    assert second_call['headers']['Authorization'] == 'Bearer abc'
+    assert second_call['url'] == '/api/v1/RegimeJuridico/1'

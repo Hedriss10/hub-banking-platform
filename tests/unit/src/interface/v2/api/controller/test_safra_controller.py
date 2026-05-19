@@ -16,6 +16,7 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
 from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBodySchema
 from src.interface.api.v2.schemas.safra_professions import SafraProfessionsSchema
 from src.interface.api.v2.schemas.safra_proposal import ProposalSchema
+from src.interface.api.v2.schemas.safra_regime_legal import SafraRegimeLegalSchema
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
 from tests.fixtures.safra_test_constants import SAFRA_TEST_CNPJ, SAFRA_TEST_CPF
@@ -207,4 +208,22 @@ async def test_get_professions_returns_schemas() -> None:
     out = await controller.get_professions(1)
     assert len(out) == 1
     assert out[0].idProfissao == 1
+    assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_get_legal_regime_returns_schemas() -> None:
+    legal_regime = [
+        SafraRegimeLegalSchema(
+            id=1,
+            descricao='Descrição',
+        )
+    ]
+    uc = AsyncMock()
+    batch_uc = AsyncMock()
+    uc.get_legal_regime = AsyncMock(return_value=legal_regime)
+    controller = SafraController(uc, batch_uc)
+    out = await controller.get_legal_regime(1)
+    assert len(out) == 1
+    assert out[0].id == 1
     assert out[0].descricao == 'Descrição'
