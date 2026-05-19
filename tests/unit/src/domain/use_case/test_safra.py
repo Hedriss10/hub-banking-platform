@@ -14,6 +14,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.use_case.safra import SafraUseCase
@@ -178,3 +179,18 @@ async def test_get_employing_bodies_delegates_to_service() -> None:
     uc = SafraUseCase(service)
     out = await uc.get_employing_bodies(1)
     assert out == employing_bodies
+
+
+@pytest.mark.asyncio
+async def test_get_professions_delegates_to_service() -> None:
+    professions = [
+        SafraProfessionsDTO(
+            idProfissao=1,
+            descricao='Descrição',
+        )
+    ]
+    service = AsyncMock()
+    service.get_professions = AsyncMock(return_value=professions)
+    uc = SafraUseCase(service)
+    out = await uc.get_professions(1)
+    assert out == professions

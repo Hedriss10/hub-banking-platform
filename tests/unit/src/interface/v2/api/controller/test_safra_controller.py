@@ -14,6 +14,7 @@ from src.interface.api.v2.schemas.safra_credit_ligth_house import (
     CreditLighthouseInSchema,
 )
 from src.interface.api.v2.schemas.safra_employing_body import SafraEmployingBodySchema
+from src.interface.api.v2.schemas.safra_professions import SafraProfessionsSchema
 from src.interface.api.v2.schemas.safra_proposal import ProposalSchema
 from src.interface.api.v2.schemas.safra_tables import SafraTablesOutSchema
 from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
@@ -188,4 +189,22 @@ async def test_get_employing_bodies_returns_schemas() -> None:
     out = await controller.get_employing_bodies(1)
     assert len(out) == 1
     assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_get_professions_returns_schemas() -> None:
+    professions = [
+        SafraProfessionsSchema(
+            idProfissao=1,
+            descricao='Descrição',
+        )
+    ]
+    uc = AsyncMock()
+    batch_uc = AsyncMock()
+    uc.get_professions = AsyncMock(return_value=professions)
+    controller = SafraController(uc, batch_uc)
+    out = await controller.get_professions(1)
+    assert len(out) == 1
+    assert out[0].idProfissao == 1
     assert out[0].descricao == 'Descrição'

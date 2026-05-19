@@ -14,6 +14,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.infrastructure.repositories.safra_external import SafraExternalRepository
@@ -380,4 +381,24 @@ async def test_get_employing_bodies_maps_response_json() -> None:
     assert len(out) == 1
     assert isinstance(out[0], SafraEmployingBodyDTO)
     assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_get_professions_maps_response_json() -> None:
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'idProfissao': 1,
+            'descricao': 'Descrição',
+        }
+    ]
+    repo.api.get_professions = AsyncMock(return_value=mock_resp)
+
+    out = await repo.get_professions(1)
+
+    assert len(out) == 1
+    assert isinstance(out[0], SafraProfessionsDTO)
+    assert out[0].idProfissao == 1
     assert out[0].descricao == 'Descrição'

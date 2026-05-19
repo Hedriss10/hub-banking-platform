@@ -282,3 +282,32 @@ async def test_get_employing_bodies_uses_bearer_from_token(safra_api: SafraApi) 
     second_call = mock_req.await_args_list[1][0][0]
     assert second_call['headers']['Authorization'] == 'Bearer abc'
     assert second_call['url'] == '/api/v1/OrgaoEmpregador/1'
+
+
+@pytest.mark.asyncio
+async def test_get_professions_uses_bearer_from_token(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    professions_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/professions'),
+        json=[],
+    )
+    urls: list[str] = []
+
+    async def _req(data: dict):
+        urls.append(data['url'])
+        if data['method'] == 'POST':
+            return token_resp
+        return professions_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.get_professions(1)
+    assert out.json() == []
+    second_call = mock_req.await_args_list[1][0][0]
+    assert second_call['headers']['Authorization'] == 'Bearer abc'
+    assert second_call['url'] == '/api/v1/Profissao/1'

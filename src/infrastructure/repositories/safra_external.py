@@ -13,6 +13,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.repositories.safra import SafraRepository
@@ -77,3 +78,11 @@ class SafraExternalRepository(SafraRepository):
         payload = response.json()
         rows = payload if isinstance(payload, list) else [payload]
         return [SafraEmployingBodyDTO.model_validate(row) for row in rows]
+
+    async def get_professions(
+        self, financial_agreement_id: int
+    ) -> List[SafraProfessionsDTO]:
+        response = await self.api.get_professions(financial_agreement_id)
+        payload = response.json()
+        rows = payload if isinstance(payload, list) else [payload]
+        return [SafraProfessionsDTO.model_validate(row) for row in rows]

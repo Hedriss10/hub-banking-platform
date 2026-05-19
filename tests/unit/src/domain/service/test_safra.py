@@ -14,6 +14,7 @@ from src.domain.dtos.safra_credit_ligth_house import (
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
 from src.domain.dtos.safra_tables import SafraTablesDto
 from src.domain.service.safra import SafraService
@@ -187,4 +188,23 @@ async def test_get_employing_bodies_delegates_to_repository() -> None:
     repo.get_employing_bodies.assert_awaited_once_with(1)
     assert len(out) == 1
     assert out[0].id == 1
+    assert out[0].descricao == 'Descrição'
+
+
+@pytest.mark.asyncio
+async def test_get_professions_delegates_to_repository() -> None:
+    professions = [
+        SafraProfessionsDTO(
+            idProfissao=1,
+            descricao='Descrição',
+        )
+    ]
+    repo = AsyncMock()
+    repo.get_professions = AsyncMock(return_value=professions)
+    service = SafraService(repo)
+    out = await service.get_professions(1)
+    assert out == professions
+    repo.get_professions.assert_awaited_once_with(1)
+    assert len(out) == 1
+    assert out[0].idProfissao == 1
     assert out[0].descricao == 'Descrição'
