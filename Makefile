@@ -32,6 +32,10 @@ help:
 	@echo "        Remove o volume Docker do Postgres e recria o banco do zero."
 	@echo "    migrate-autogen"
 	@echo "        Gera nova migração Alembic a partir dos models (use MSG=\"texto\")."
+	@echo "    init-db"
+	@echo "        Aplica migrações Alembic e cria usuário dev padrão."
+	@echo "    seed"
+	@echo "        Cria usuário de desenvolvimento (usuario.dev@hotmail.com)."
 
 # Docker Compose - usa arquivos da pasta docker/ e .env para variáveis
 COMPOSE := docker compose -f docker/docker-compose.yml --project-directory . --env-file .env
@@ -80,6 +84,11 @@ lint-fix:
 
 init-db:
 	SQLALCHEMY_DATABASE_URI=$(LOCAL_SQLALCHEMY_DATABASE_URI) poetry run alembic upgrade head
+	$(MAKE) seed
+
+seed:
+	SQLALCHEMY_DATABASE_URI=$(LOCAL_SQLALCHEMY_DATABASE_URI) \
+	poetry run python -c "from src.infrastructure.seed.init_system import main; main()"
 
 migrate-autogen:
 	SQLALCHEMY_DATABASE_URI=$(LOCAL_SQLALCHEMY_DATABASE_URI) poetry run alembic revision --autogenerate -m "$(MSG)"
