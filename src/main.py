@@ -2,6 +2,7 @@ from typing import Optional
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from src.core.config.settings import get_settings
@@ -39,7 +40,7 @@ app = FastAPI(
     description='Redireciona para a documentação',
 )
 async def root() -> dict[str, str]:
-    return {'message': 'API Hub Banking Platform Acesse a Documentação em /docs'}
+    return RedirectResponse(url='/docs')
 
 
 _cors_origins = [

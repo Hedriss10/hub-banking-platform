@@ -26,9 +26,18 @@ help:
 	@echo "        Lint code with ruff in watch mode."
 	@echo "    lint-fix"
 	@echo "        Lint code with ruff and try to fix."
+	@echo "    reset-db"
+	@echo "        Apaga schema, tabelas, dados e histórico do Alembic no Postgres local."
+	@echo "    reset-db-volume"
+	@echo "        Remove o volume Docker do Postgres e recria o banco do zero."
+	@echo "    migrate-autogen"
+	@echo "        Gera nova migração Alembic a partir dos models (use MSG=\"texto\")."
 
 # Docker Compose - usa arquivos da pasta docker/ e .env para variáveis
 COMPOSE := docker compose -f docker/docker-compose.yml --project-directory . --env-file .env
+LOCAL_SQLALCHEMY_DATABASE_URI := postgresql+asyncpg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)
+LOCAL_REDIS_URL := redis://$(POSTGRES_HOST):$(REDIS_PORT)/0
+MSG ?= migration
 
 DEPLOY_IMAGE := docker buildx build \
   --platform linux/amd64 \
@@ -70,7 +79,18 @@ lint-fix:
 	poetry run ruff src --fix
 
 init-db:
-	poetry run alembic upgrade head
+	SQLALCHEMY_DATABASE_URI=$(LOCAL_SQLALCHEMY_DATABASE_URI) poetry run alembic upgrade head
+
+migrate-autogen:
+	SQLALCHEMY_DATABASE_URI=$(LOCAL_SQLALCHEMY_DATABASE_URI) poetry run alembic revision --autogenerate -m "$(MSG)"
+
+reset-db:
+	@./entrypoints/reset-db.sh
+
+reset-db-volume:
+	$(COMPOSE) down -v
+	$(COMPOSE) up -d hub-banking-platform
+	@echo "✅ Volume do PostgreSQL removido. Aguarde o healthcheck e rode: make init-db"
 
 alembic-init:
 	poetry run alembic init migrations
