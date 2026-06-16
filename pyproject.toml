@@ -113,20 +113,70 @@ explicit_package_bases = true
 targets = ["src"]
 
 [tool.taskipy.tasks]
-lint = 'ruff check . --fix && ruff format .'
-format = 'ruff format .'
-pre_test = 'task lint'
-test = 'pytest -s -x --cov=src -vv'
-post_test = 'coverage html'
-open_coverage = 'open htmlcov/index.html'
-pre_test_unit = 'task lint'
-test_unit = 'pytest tests -s -x --cov=src -vv'
-test_integration = 'pytest tests/integration -s -vv -m integration --no-cov'
+# --- setup ---
+help = 'task --list'
+install = 'poetry install --with dev'
 upgrade = """
 poetry add fastapi@latest uvicorn@latest python-multipart@latest &&
 poetry add pytest@latest pytest-cov@latest ruff@latest --group dev &&
 poetry update
 """
+
+# --- app local ---
+run = """
+set -a && . ./.env && set +a &&
+uvicorn src.main:app --reload --workers 3 --port ${API_PORT}
+"""
+
+# --- docker compose ---
+build = 'docker compose -f docker/docker-compose.yml --project-directory . --env-file .env up -d --build'
+up = 'docker compose -f docker/docker-compose.yml --project-directory . --env-file .env up -d'
+down = 'docker compose -f docker/docker-compose.yml --project-directory . --env-file .env down -v'
+logs = 'docker compose -f docker/docker-compose.yml --project-directory . --env-file .env logs -f'
+
+# --- deploy ---
+deploy = 'docker buildx build --platform linux/amd64 -f docker/Dockerfile -t hedris10/hub-banking-platform:latest --push .'
+
+# --- lint / format ---
+formatter = 'ruff format src'
+lint = 'ruff check --fix src && ruff format --check src'
+lint-watch = 'ruff check src --watch'
+lint-fix = 'ruff check src --fix'
+mypy = 'mypy .'
+
+# --- testes ---
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=src -vv'
+post_test = 'coverage html'
+open_coverage = 'open htmlcov/index.html'
+pre_test_unit = 'task lint'
+test_unit = 'pytest tests/unit -s -x --cov=src -vv'
+test_integration = 'pytest tests/integration -s -vv -m integration --no-cov'
+
+# --- banco de dados ---
+seed = """
+set -a && . ./.env && set +a &&
+export LOCAL_SQLALCHEMY_DATABASE_URI="postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}" &&
+SQLALCHEMY_DATABASE_URI=$LOCAL_SQLALCHEMY_DATABASE_URI python -c "from src.infrastructure.seed.init_system import main; main()"
+"""
+init-db = """
+set -a && . ./.env && set +a &&
+export LOCAL_SQLALCHEMY_DATABASE_URI="postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}" &&
+SQLALCHEMY_DATABASE_URI=$LOCAL_SQLALCHEMY_DATABASE_URI alembic upgrade head &&
+task seed
+"""
+migrate-autogen = """
+set -a && . ./.env && set +a &&
+export LOCAL_SQLALCHEMY_DATABASE_URI="postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}" &&
+SQLALCHEMY_DATABASE_URI=$LOCAL_SQLALCHEMY_DATABASE_URI alembic revision --autogenerate -m "${MSG:-migration}"
+"""
+reset-db = 'set -a && . ./.env && set +a && ./entrypoints/reset-db.sh'
+reset-db-volume = """
+docker compose -f docker/docker-compose.yml --project-directory . --env-file .env down -v &&
+docker compose -f docker/docker-compose.yml --project-directory . --env-file .env up -d hub-banking-platform &&
+echo '✅ Volume do PostgreSQL removido. Aguarde o healthcheck e rode: task init-db'
+"""
+alembic-init = 'alembic init migrations'
 
 [alembic]
 script_location = "migrations"
