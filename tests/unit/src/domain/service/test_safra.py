@@ -9,12 +9,20 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_calculation import (
+    CalculationRequestDto,
+    CalculationResponseDto,
+)
 from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_formalization_link import (
+    FormalizationLinkQueryDto,
+    FormalizationLinkResponseDto,
+)
 from src.domain.dtos.safra_legal_regime import LegalRegimeDTO
 from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
@@ -139,6 +147,30 @@ async def test_post_credit_lighthouse_delegates_to_repository() -> None:
     assert out[0].decisaoFarol == 1
     assert out[0].cpf == SAFRA_TEST_CPF
     assert out[0].idTipoProduto == id_tipo_retorno
+
+
+@pytest.mark.asyncio
+async def test_post_calculo_novo_delegates_to_repository() -> None:
+    dto_in = CalculationRequestDto(idConvenio=1, cpf=12345678901, comSeguro=False)
+    dto_out = CalculationResponseDto(criticas=[], avisos=[])
+    repo = AsyncMock()
+    repo.post_calculo_novo = AsyncMock(return_value=dto_out)
+    service = SafraService(repo)
+    out = await service.post_calculo_novo(dto_in)
+    assert out == dto_out
+    repo.post_calculo_novo.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_formalization_link_delegates_to_repository() -> None:
+    query = FormalizationLinkQueryDto(idProposta=1)
+    expected = [FormalizationLinkResponseDto(idProposta=1, link='https://x')]
+    repo = AsyncMock()
+    repo.get_proposal_formalization_link = AsyncMock(return_value=expected)
+    service = SafraService(repo)
+    out = await service.get_proposal_formalization_link(query)
+    assert out == expected
+    repo.get_proposal_formalization_link.assert_awaited_once_with(query)
 
 
 @pytest.mark.asyncio

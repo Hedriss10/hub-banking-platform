@@ -24,7 +24,8 @@ class HttpxRequest(TypedDict, total=False):
     url: str
     method: Literal['GET', 'POST', 'PUT', 'DELETE']
     headers: dict[str, str]
-    json: dict
+    json: dict | list
+    files: dict
     timeout: float
     # False: não chama raise_for_status (tratamento manual do status HTTP)
     raise_for_status: bool
@@ -55,16 +56,23 @@ class ApiBaseClient:
 
     async def request(self, data: HttpxRequest) -> httpx.Response:
         try:
+            headers = {**self.default_headers, **data.get('headers', {})}
+            if data.get('files'):
+                headers.pop('Content-Type', None)
             async with httpx.AsyncClient(
                 base_url=self.base_url,
                 timeout=data.get('timeout', self.timeout),
-                headers={**self.default_headers, **data.get('headers', {})},
+                headers=headers,
             ) as client:
-                response = await client.request(
-                    method=data['method'],
-                    url=data['url'],
-                    json=data.get('json'),
-                )
+                request_kwargs: dict = {
+                    'method': data['method'],
+                    'url': data['url'],
+                }
+                if 'json' in data:
+                    request_kwargs['json'] = data['json']
+                if data.get('files'):
+                    request_kwargs['files'] = data['files']
+                response = await client.request(**request_kwargs)
                 if data.get('raise_for_status', True):
                     response.raise_for_status()
                 return response

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
@@ -18,7 +18,7 @@ class CreditLighthouseOutSchema(BaseModel):
         validation_alias=AliasChoices('decisaoFarol', 'DecisaoFarol'),
     )
     cpf: int = Field(validation_alias=AliasChoices('cpf', 'Cpf'))
-    idTipoProduto: int | None = Field(
+    idTipoProduto: Optional[int] = Field(
         default=None,
         validation_alias=AliasChoices('idTipoProduto', 'IdTipoProduto'),
     )

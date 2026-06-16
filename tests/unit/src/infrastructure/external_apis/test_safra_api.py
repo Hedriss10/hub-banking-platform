@@ -4,7 +4,9 @@ import httpx
 import pytest
 from src.core.exceptions.custom import InfrastructureException
 from src.domain.dtos.safra import MargemBpoDto
+from src.domain.dtos.safra_calculation import CalculationRequestDto
 from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseDto
+from src.domain.dtos.safra_formalization_link import FormalizationLinkQueryDto
 from src.domain.dtos.safra_proposal import ProposalDto
 from src.infrastructure.external_apis.safra import SafraApi
 from tests.fixtures.safra_proposal_min import minimal_safra_proposal_payload
@@ -253,6 +255,224 @@ async def test_post_safra_proposal_posts_propostas_novo(safra_api: SafraApi) -> 
     assert proposal_call['url'] == '/api/v1/Propostas/Novo'
     assert proposal_call['headers']['Authorization'] == 'Bearer abc'
     assert proposal_call['json'] == dto_in.model_dump()
+
+
+@pytest.mark.asyncio
+async def test_post_calculo_novo_posts_calculo_novo(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    calculo_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/calculo'),
+        json={'criticas': [], 'avisos': []},
+    )
+    dto_in = CalculationRequestDto(idConvenio=1, cpf=12345678901, comSeguro=False)
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return calculo_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.post_calculo_novo(dto_in)
+
+    assert out.json()['criticas'] == []
+    calculo_call = mock_req.await_args_list[1][0][0]
+    assert calculo_call['method'] == 'POST'
+    assert calculo_call['url'] == '/api/v1/Calculo/Novo'
+    assert calculo_call['headers']['Authorization'] == 'Bearer abc'
+    assert calculo_call['json'] == dto_in.model_dump(mode='json', exclude_none=True)
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_formalization_link_uses_query_params(
+    safra_api: SafraApi,
+) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    link_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/link'),
+        json=[{'idProposta': 99, 'link': 'https://form.example'}],
+    )
+    query = FormalizationLinkQueryDto(idProposta=99)
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return link_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.get_proposal_formalization_link(query)
+
+    assert out.json()[0]['idProposta'] == 99
+    link_call = mock_req.await_args_list[1][0][0]
+    assert link_call['method'] == 'GET'
+    assert link_call['url'] == '/api/v1/Propostas/ObterLinkFormalizacao?idProposta=99'
+    assert link_call['headers']['Authorization'] == 'Bearer abc'
+
+
+@pytest.mark.asyncio
+async def test_list_proposals_uses_pascal_case_query(safra_api: SafraApi) -> None:
+    from src.domain.dtos.safra_proposal_tracking import ProposalListQueryDto
+
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    proposals_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/propostas'),
+        json=[{'idProposta': 1}],
+    )
+    query = ProposalListQueryDto(id_proposta=1, id_convenio=10)
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return proposals_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.list_proposals(query)
+
+    assert out.json()[0]['idProposta'] == 1
+    list_call = mock_req.await_args_list[1][0][0]
+    assert list_call['url'] == '/api/v1/Propostas?IdProposta=1&IdConvenio=10'
+
+
+@pytest.mark.asyncio
+async def test_get_contracts_status_by_cpf(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    status_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/status'),
+        json=[{'nrCpfCliente': '123', 'qtPendencias': 0}],
+    )
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return status_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.get_contracts_status_by_cpf('12345678901')
+
+    assert out.json()[0]['nrCpfCliente'] == '123'
+    status_call = mock_req.await_args_list[1][0][0]
+    assert status_call['url'] == '/api/v1/ContratosStatus/cpf/12345678901'
+
+
+@pytest.mark.asyncio
+async def test_post_calculo_refin_posts_calculo_refin(safra_api: SafraApi) -> None:
+    from src.domain.dtos.safra_calculation import CalculationRefinRequestDto
+
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    calculo_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/calculo-refin'),
+        json={'criticas': []},
+    )
+    dto_in = CalculationRefinRequestDto(
+        idConvenio=1,
+        cpf=12345678901,
+        comSeguro=False,
+        valorMargemAdicional=0.0,
+    )
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return calculo_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.post_calculo_refin(dto_in)
+
+    assert out.json()['criticas'] == []
+    call = mock_req.await_args_list[1][0][0]
+    assert call['url'] == '/api/v1/Calculo/Refin'
+
+
+@pytest.mark.asyncio
+async def test_post_proposal_attachment_posts_documento_anexo(
+    safra_api: SafraApi,
+) -> None:
+    from src.domain.dtos.safra_proposal_attachment import ProposalAttachmentDto
+
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    attach_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/attach'),
+        json={},
+    )
+    dto_in = ProposalAttachmentDto(
+        idDocumento=1,
+        nomeArquivo='doc.pdf',
+        conteudoArquivo='base64content',
+    )
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return attach_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        await safra_api.post_proposal_attachment(99, dto_in)
+
+    call = mock_req.await_args_list[1][0][0]
+    assert call['url'] == '/api/v1/Propostas/99/DocumentoAnexo'
+    assert call['json'] == dto_in.model_dump()
+
+
+@pytest.mark.asyncio
+async def test_list_leads_gets_lead_endpoint(safra_api: SafraApi) -> None:
+    token_resp = httpx.Response(
+        200,
+        request=httpx.Request('POST', 'https://x/token'),
+        json={'token': 'abc'},
+    )
+    leads_resp = httpx.Response(
+        200,
+        request=httpx.Request('GET', 'https://x/leads'),
+        json=[{'idLead': 'L1'}],
+    )
+
+    async def _req(data: dict):
+        if data['url'] == '/api/v1/Token':
+            return token_resp
+        return leads_resp
+
+    mock_req = AsyncMock(side_effect=_req)
+    with patch.object(safra_api, 'request', mock_req):
+        out = await safra_api.list_leads()
+
+    assert out.json()[0]['idLead'] == 'L1'
+    call = mock_req.await_args_list[1][0][0]
+    assert call['url'] == '/api/v1/Lead'
 
 
 @pytest.mark.asyncio

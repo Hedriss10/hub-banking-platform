@@ -22,7 +22,8 @@ class _FakeAsyncClient:
     async def __aexit__(self, *args):
         return False
 
-    async def request(self, method, url, json=None):
+    async def request(self, method, url, json=None, files=None):
+        self.last_request = {'method': method, 'url': url, 'json': json, 'files': files}
         if self._exc is not None:
             raise self._exc
         return self._response
@@ -41,6 +42,29 @@ def api_client() -> ApiBaseClient:
         timeout=3.0,
         default_headers={'X-Default': '1'},
     )
+
+
+@pytest.mark.asyncio
+async def test_request_with_files_strips_content_type_and_forwards_files(
+    api_client: ApiBaseClient,
+) -> None:
+    api_client.default_headers['Content-Type'] = 'application/json'
+    ok = _ok_response()
+    captured: list[_FakeAsyncClient] = []
+
+    def _client_factory(**kwargs):
+        fake = _FakeAsyncClient(ok, **kwargs)
+        captured.append(fake)
+        return fake
+
+    with patch('httpx.AsyncClient', side_effect=_client_factory):
+        await api_client.request({
+            'method': 'POST',
+            'url': '/upload',
+            'files': {'file': ('a.csv', b'data')},
+        })
+    assert 'Content-Type' not in captured[0].kwargs['headers']
+    assert captured[0].last_request['files'] == {'file': ('a.csv', b'data')}
 
 
 @pytest.mark.asyncio

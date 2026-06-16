@@ -6,7 +6,9 @@ from httpx import AsyncClient
 from src.domain.dtos.safra import BankerResponse, MargemBpoOutputDto, TokenResponse
 from src.domain.dtos.safra_batch_search import SafraBatchSearchExportRowDTO
 from src.domain.dtos.safra_credit_ligth_house import CreditLighthouseResponse
+from src.domain.dtos.safra_calculation import CalculationResponseDto
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_formalization_link import FormalizationLinkResponseDto
 from src.domain.dtos.safra_proposal import ProposalResponseDto
 from src.domain.exceptions.safra_batch_search import SafraBatchSearchNotFoundException
 from src.interface.api.v2.schemas.employee_situation import EmployeeSituationSchema
@@ -30,8 +32,10 @@ _SAFRA_BATCH_EXPORT_TEMPLATE = '/api/v2/safra/batch/search/{job_id}/export'
 _SAFRA_BATCH_DELETE_TEMPLATE = '/api/v2/safra/batch/search/{job_id}'
 _SAFRA_FINANCIAL_AGREEMENTS = '/api/v2/safra/financial-agreements'
 _SAFRA_CREDIT_LIGHTHOUSE = '/api/v2/safra/credit-lighthouse'
+_SAFRA_CALCULATION_NEW = '/api/v2/safra/calculation/new'
 _SAFRA_TABLES = '/api/v2/safra/tables/{convenio_id}'
 _SAFRA_PROPOSAL = '/api/v2/safra/proposal'
+_SAFRA_PROPOSAL_FORMALIZATION_LINK = '/api/v2/safra/proposal/formalization-link'
 _SAFRA_EMPLOYING_BODIES = '/api/v2/safra/employing-bodies/{financial_agreement_id}'
 _SAFRA_PROFESSIONS = '/api/v2/safra/professions/{financial_agreement_id}'
 _SAFRA_LEGAL_REGIME = '/api/v2/safra/legal-regime/{financial_agreement_id}'
@@ -398,6 +402,59 @@ async def test_post_safra_credit_lighthouse(
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == [it.model_dump(mode='json') for it in items]
     mock_safra_use_case.post_credit_lighthouse.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_post_safra_calculation_new(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    expected = CalculationResponseDto(
+        criticas=[],
+        avisos=[],
+        simulacoes=[],
+    )
+    mock_safra_use_case.post_calculo_novo = AsyncMock(return_value=expected)
+    payload = {
+        'idConvenio': 1,
+        'cpf': SAFRA_TEST_CPF,
+        'comSeguro': False,
+        'prazo': 84,
+        'valorParcela': 250.0,
+    }
+    response = await async_safra_client.post(
+        _SAFRA_CALCULATION_NEW,
+        json=payload,
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()['criticas'] == []
+    mock_safra_use_case.post_calculo_novo.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_safra_proposal_formalization_link(
+    async_safra_client: AsyncClient,
+    mock_safra_use_case: AsyncMock,
+) -> None:
+    expected = [
+        FormalizationLinkResponseDto(
+            idProposta=321,
+            link='https://form.example',
+            idConvenio=1,
+            vlPrincipal=5000.0,
+        )
+    ]
+    mock_safra_use_case.get_proposal_formalization_link = AsyncMock(
+        return_value=expected,
+    )
+    response = await async_safra_client.get(
+        _SAFRA_PROPOSAL_FORMALIZATION_LINK,
+        params={'id_proposta': 321},
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json()[0]['idProposta'] == 321
+    assert response.json()[0]['link'] == 'https://form.example'
+    mock_safra_use_case.get_proposal_formalization_link.assert_awaited_once()
 
 
 @pytest.mark.asyncio

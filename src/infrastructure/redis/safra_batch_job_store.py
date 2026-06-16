@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 from src.core.config.settings import get_settings
@@ -13,16 +13,16 @@ def _key(job_id: UUID) -> str:
 
 
 async def job_save(job_id: UUID, payload: dict[str, Any]) -> None:
-    r = await get_redis_client()
+    result = await get_redis_client()
     settings = get_settings()
-    await r.set(
+    await result.set(
         _key(job_id), json.dumps(payload), ex=settings.SAFRA_BATCH_JOB_TTL_SECONDS
     )
 
 
-async def job_get(job_id: UUID) -> dict[str, Any] | None:
-    r = await get_redis_client()
-    raw = await r.get(_key(job_id))
+async def job_get(job_id: UUID) -> Optional[dict[str, Any]]:
+    result = await get_redis_client()
+    raw = await result.get(_key(job_id))
     if raw is None:
         return None
     return json.loads(raw)

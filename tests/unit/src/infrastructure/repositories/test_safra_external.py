@@ -9,12 +9,20 @@ from src.domain.dtos.safra import (
     MargemBpoOutputDto,
     TokenResponse,
 )
+from src.domain.dtos.safra_calculation import (
+    CalculationRequestDto,
+    CalculationResponseDto,
+)
 from src.domain.dtos.safra_credit_ligth_house import (
     CreditLighthouseDto,
     CreditLighthouseResponse,
 )
 from src.domain.dtos.safra_employing_body import SafraEmployingBodyDTO
 from src.domain.dtos.safra_financial_agreements import FinancialAgreementResponse
+from src.domain.dtos.safra_formalization_link import (
+    FormalizationLinkQueryDto,
+    FormalizationLinkResponseDto,
+)
 from src.domain.dtos.safra_legal_regime import LegalRegimeDTO
 from src.domain.dtos.safra_professions import SafraProfessionsDTO
 from src.domain.dtos.safra_proposal import ProposalDto, ProposalResponseDto
@@ -327,6 +335,146 @@ async def test_post_credit_lighthouse_wraps_single_object_json() -> None:
     assert len(out) == 1
     assert out[0].decisaoFarol == 0
     assert out[0].timeOut == 1
+
+
+@pytest.mark.asyncio
+async def test_post_calculo_novo_maps_response_json() -> None:
+    dto_in = CalculationRequestDto(idConvenio=1, cpf=12345678901, comSeguro=True)
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = {
+        'dataSimulacao': '2026-01-01T00:00:00',
+        'simulacoes': [{'prazo': 84, 'valorParcela': 250.0}],
+        'criticas': [],
+        'avisos': [],
+    }
+    repo.api.post_calculo_novo = AsyncMock(return_value=mock_resp)
+
+    out = await repo.post_calculo_novo(dto_in)
+
+    assert isinstance(out, CalculationResponseDto)
+    assert out.simulacoes is not None
+    assert out.simulacoes[0].prazo == 84
+    repo.api.post_calculo_novo.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_get_proposal_formalization_link_maps_list_json() -> None:
+    query = FormalizationLinkQueryDto(idProposta=10)
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [
+        {
+            'idProposta': 10,
+            'link': 'https://form.example',
+            'idConvenio': 1,
+            'vlPrincipal': 5000.0,
+        }
+    ]
+    repo.api.get_proposal_formalization_link = AsyncMock(return_value=mock_resp)
+
+    out = await repo.get_proposal_formalization_link(query)
+
+    assert len(out) == 1
+    assert isinstance(out[0], FormalizationLinkResponseDto)
+    assert out[0].link == 'https://form.example'
+    repo.api.get_proposal_formalization_link.assert_awaited_once_with(query)
+
+
+@pytest.mark.asyncio
+async def test_list_proposals_maps_list_json() -> None:
+    from src.domain.dtos.safra_proposal_tracking import (
+        ProposalListItemDto,
+        ProposalListQueryDto,
+    )
+
+    query = ProposalListQueryDto(id_proposta=1)
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [{'idProposta': 1, 'status': 'OK'}]
+    repo.api.list_proposals = AsyncMock(return_value=mock_resp)
+
+    out = await repo.list_proposals(query)
+
+    assert len(out) == 1
+    assert isinstance(out[0], ProposalListItemDto)
+    assert out[0].idProposta == 1
+    repo.api.list_proposals.assert_awaited_once_with(query)
+
+
+@pytest.mark.asyncio
+async def test_get_contracts_status_by_cpf_maps_list_json() -> None:
+    from src.domain.dtos.safra_contracts import ContractStatusDto
+
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [{'nrCpfCliente': '123', 'qtPendencias': 0}]
+    repo.api.get_contracts_status_by_cpf = AsyncMock(return_value=mock_resp)
+
+    out = await repo.get_contracts_status_by_cpf('123')
+
+    assert len(out) == 1
+    assert isinstance(out[0], ContractStatusDto)
+    assert out[0].nrCpfCliente == '123'
+
+
+@pytest.mark.asyncio
+async def test_post_calculo_refin_maps_response_json() -> None:
+    from src.domain.dtos.safra_calculation import (
+        CalculationRefinRequestDto,
+        CalculationResponseDto,
+    )
+
+    dto_in = CalculationRefinRequestDto(
+        idConvenio=1,
+        cpf=12345678901,
+        comSeguro=True,
+        valorMargemAdicional=100.0,
+    )
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = {'criticas': [], 'avisos': []}
+    repo.api.post_calculo_refin = AsyncMock(return_value=mock_resp)
+
+    out = await repo.post_calculo_refin(dto_in)
+
+    assert isinstance(out, CalculationResponseDto)
+    repo.api.post_calculo_refin.assert_awaited_once_with(dto_in)
+
+
+@pytest.mark.asyncio
+async def test_post_proposal_attachment_delegates_to_api() -> None:
+    from src.domain.dtos.safra_proposal_attachment import ProposalAttachmentDto
+
+    dto_in = ProposalAttachmentDto(
+        idDocumento=1,
+        nomeArquivo='a.pdf',
+        conteudoArquivo='data',
+    )
+    repo = SafraExternalRepository()
+    repo.api.post_proposal_attachment = AsyncMock(
+        return_value=MagicMock(spec=httpx.Response),
+    )
+
+    await repo.post_proposal_attachment(10, dto_in)
+
+    repo.api.post_proposal_attachment.assert_awaited_once_with(10, dto_in)
+
+
+@pytest.mark.asyncio
+async def test_list_leads_maps_list_json() -> None:
+    from src.domain.dtos.safra_leads import LeadDto
+
+    repo = SafraExternalRepository()
+    mock_resp = MagicMock(spec=httpx.Response)
+    mock_resp.json.return_value = [{'idLead': 'L1', 'passo': 1}]
+    repo.api.list_leads = AsyncMock(return_value=mock_resp)
+
+    out = await repo.list_leads()
+
+    assert len(out) == 1
+    assert isinstance(out[0], LeadDto)
+    assert out[0].idLead == 'L1'
 
 
 @pytest.mark.asyncio

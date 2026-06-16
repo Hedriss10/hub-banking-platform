@@ -1,10 +1,13 @@
 from datetime import datetime
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SafraTablesDto(BaseModel):
-    id: int
-    descricao: str
-    dtInicioVigencia: datetime
-    dtFimVigencia: datetime
+    model_config = ConfigDict(extra='ignore')
+
+    id: Optional[int] = None
+    descricao: Optional[str] = None
+    dtInicioVigencia: Optional[datetime] = None
+    dtFimVigencia: Optional[datetime] = None
